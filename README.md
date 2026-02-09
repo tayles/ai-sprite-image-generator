@@ -1,6 +1,12 @@
 # ai-sprite-image-generator
 
-Use Google Nano Banana Pro via kie.ai to generate sprite images
+Use Google Nano Banana Pro via [kie.ai](https://kie.ai) to generate sprite images.
+This is a quick and cheap way to create lots of medium-resolution images quickly.
+
+## Pricing
+
+At time of writing, a 4k 4096x4096px image costs **$0.12** (24 API credits - [source](https://kie.ai/pricing)).
+By generating a 5x5 sprite sheet we can generate 25 820x820px images for **$0.0048** each.
 
 ## Installation
 
@@ -11,15 +17,10 @@ bun add ai-sprite-image-generator
 ## Usage
 
 ```typescript
-import { greet } from 'ai-sprite-image-generator';
+import { generateImages } from 'ai-sprite-image-generator';
 
-console.log(greet('World')); // Hello, World!
+const kieApiToken = 'your-kie-api-token';
+const prommpt = 'photos of cats';
+
+generateImages(kieApiToken, prommpt);
 ```
-
-## Contributing
-
-Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for contribution guidelines.
-
-## License
-
-MIT

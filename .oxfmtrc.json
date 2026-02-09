@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "semi": true,
+  "singleQuote": true,
+  "arrowParens": "avoid",
+  "trailingComma": "all",
+  "quoteProps": "as-needed",
+  "experimentalSortImports": {
+    "enabled": true
+  },
+  "experimentalTailwindcss": {
+    "enabled": true
+  }
+}
