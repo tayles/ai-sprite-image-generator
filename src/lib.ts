@@ -6,75 +6,154 @@ import sharp from 'sharp';
 import {
   createTask,
   pollTaskStatus,
-  type AspectRatio,
   type KieAiCreateTaskRequestBody,
   type OutputFormat,
-  type Resolution,
 } from './kie-ai-client';
 import { RateLimiter, executeWithRateLimit } from './rate-limiter';
 import { kebabCase } from './utils';
+import {
+  type CellDefinition,
+  type ImageGenerationOptions,
+  type CellDefinitions,
+  type ImageGenerationResult,
+  DEFAULT_OPTIONS,
+  type BatchResult,
+} from './types';
 
-export interface ImageGenerationOptions {
-  rows: number;
-  columns: number;
-  outputPath: string;
-  existing: 'overwrite' | 'skip';
+/**
+ * Generates sprite sheet images from a prompt with optional cell definitions.
+ * Supports parallel batch processing with rate limiting.
+ *
+ * @param apiToken - KIE API token
+ * @param prompt - User prompt describing the desired image style
+ * @param cells - Optional array of cell names or definitions
+ * @param options - Generation options
+ * @returns ImageGenerationResult with paths to generated images
+ */
+export async function generateImages(
+  apiToken: string,
+  prompt: string,
+  options: Partial<ImageGenerationOptions> = {},
+  cells?: CellDefinitions,
+): Promise<ImageGenerationResult> {
+  const opts = { ...DEFAULT_OPTIONS, ...options };
+  const startTime = Date.now();
 
-  aspectRatio: AspectRatio;
-  resolution: Resolution;
-  outputFormat: OutputFormat;
+  console.log(`[Generator] Starting image generation...`);
+  console.log(
+    `[Generator] Prompt: "${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}"`,
+  );
+  console.log(`[Generator] Options:`, {
+    rows: opts.rows,
+    columns: opts.columns,
+    outputPath: opts.outputPath,
+    existing: opts.existing,
+    maxConcurrentBatches: opts.maxConcurrentBatches,
+  });
 
-  /** Maximum concurrent batch requests (respects rate limits) */
-  maxConcurrentBatches: number;
-  /** Polling interval in milliseconds */
-  pollIntervalMs: number;
-  /** Maximum polling attempts per task */
-  maxPollAttempts: number;
-  /** Maximum retries for failed requests */
-  maxRetries: number;
-  /** Model to use for image generation */
-  model: string;
-}
+  // Normalize cell definitions
+  const cellDefs: CellDefinition[] =
+    cells?.map(cell => {
+      if (typeof cell === 'string') {
+        return { id: kebabCase(cell), name: cell };
+      }
+      return cell;
+    }) ?? [];
 
-export const DEFAULT_OPTIONS: ImageGenerationOptions = {
-  rows: 5,
-  columns: 5,
-  outputPath: './out',
-  existing: 'overwrite',
+  // If no cells provided, generate a single sprite sheet with default naming
+  const totalCells = opts.rows * opts.columns;
+  if (cellDefs.length === 0) {
+    for (let i = 0; i < totalCells; i++) {
+      cellDefs.push({ id: `image-${i + 1}`, name: `Image ${i + 1}` });
+    }
+  }
 
-  aspectRatio: '1:1',
-  resolution: '4K',
-  outputFormat: 'png',
+  console.log(`[Generator] Processing ${cellDefs.length} cells in batches of ${totalCells}`);
 
-  maxConcurrentBatches: 10,
-  pollIntervalMs: 5_000,
-  maxPollAttempts: 60,
-  maxRetries: 3,
-  model: 'nano-banana-pro',
-};
+  // Create output directories
+  await ensureDirectoryExists(join(opts.outputPath, 'batches'));
+  await ensureDirectoryExists(join(opts.outputPath, 'images'));
 
-export interface CellDefinition {
-  id: string;
-  name: string;
-}
+  // Split cells into batches
+  const batches: CellDefinition[][] = [];
+  for (let i = 0; i < cellDefs.length; i += totalCells) {
+    batches.push(cellDefs.slice(i, i + totalCells));
+  }
 
-export type CellDefinitions = string[] | CellDefinition[];
+  console.log(`[Generator] Created ${batches.length} batch(es)`);
 
-export interface BatchResult {
-  batchIndex: number;
-  batchImagePath: string;
-  imagePaths: string[];
-  cells: CellDefinition[];
-  success: boolean;
-  error?: Error;
-}
+  // Create rate limiter (20 requests per 10 seconds)
+  const rateLimiter = new RateLimiter(20, 10_000);
 
-export interface ImageGenerationResult {
-  batchImagePaths: string[];
-  imagePaths: string[];
-  errors: Array<{ batchIndex: number; error: Error }>;
-  totalBatches: number;
-  successfulBatches: number;
+  // Create batch processing tasks
+  const batchTasks = batches.map((batchCells, batchIndex) => async () => {
+    try {
+      return await processBatch(batchIndex, batchCells, apiToken, prompt, opts, rateLimiter);
+    } catch (error) {
+      console.error(`[Batch ${batchIndex + 1}] ❌ Failed: ${(error as Error).message}`);
+      return {
+        batchIndex,
+        batchImagePath: '',
+        imagePaths: [],
+        cells: batchCells,
+        success: false,
+        error: error as Error,
+      } as BatchResult;
+    }
+  });
+
+  // Execute batches in parallel with rate limiting
+  console.log(
+    `[Generator] Processing ${batches.length} batches with max ${opts.maxConcurrentBatches} concurrent...`,
+  );
+
+  const results = await executeWithRateLimit<BatchResult>(
+    batchTasks,
+    rateLimiter,
+    opts.maxConcurrentBatches,
+  );
+
+  // Aggregate results
+  const batchImagePaths: string[] = [];
+  const imagePaths: string[] = [];
+  const errors: Array<{ batchIndex: number; error: Error }> = [];
+
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      const batchResult = result.value;
+      if (batchResult.success) {
+        batchImagePaths.push(batchResult.batchImagePath);
+        imagePaths.push(...batchResult.imagePaths);
+      } else if (batchResult.error) {
+        errors.push({ batchIndex: batchResult.batchIndex, error: batchResult.error });
+      }
+    } else {
+      errors.push({ batchIndex: -1, error: result.reason as Error });
+    }
+  }
+
+  const elapsed = (Date.now() - startTime) / 1000;
+  const successfulBatches = batches.length - errors.length;
+
+  console.log(`[Generator] ✅ Completed in ${elapsed.toFixed(1)}s`);
+  console.log(
+    `[Generator] Results: ${successfulBatches}/${batches.length} batches, ${imagePaths.length} images`,
+  );
+
+  if (errors.length > 0) {
+    console.warn(`[Generator] ⚠️ ${errors.length} batch(es) failed:`);
+    for (const { batchIndex, error } of errors) {
+      console.warn(`  - Batch ${batchIndex + 1}: ${error.message}`);
+    }
+  }
+
+  return {
+    batchImagePaths,
+    imagePaths,
+    errors,
+    totalBatches: batches.length,
+    successfulBatches,
+  };
 }
 
 /**
@@ -164,7 +243,7 @@ export async function splitSpriteSheet(
   spriteBuffer: Buffer,
   outputPath: string,
   filenames: string[] = [],
-  outputFormat: OutputFormat,
+  outputFormat: OutputFormat = 'png',
   rows: number = 5,
   columns: number = 5,
 ): Promise<string[]> {
@@ -340,141 +419,5 @@ async function processBatch(
     imagePaths,
     cells: batchCells,
     success: true,
-  };
-}
-
-/**
- * Generates sprite sheet images from a prompt with optional cell definitions.
- * Supports parallel batch processing with rate limiting.
- *
- * @param apiToken - KIE API token
- * @param prompt - User prompt describing the desired image style
- * @param cells - Optional array of cell names or definitions
- * @param options - Generation options
- * @returns ImageGenerationResult with paths to generated images
- */
-export async function generateImages(
-  apiToken: string,
-  prompt: string,
-  cells?: CellDefinitions,
-  options: Partial<ImageGenerationOptions> = {},
-): Promise<ImageGenerationResult> {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
-  const startTime = Date.now();
-
-  console.log(`[Generator] Starting image generation...`);
-  console.log(
-    `[Generator] Prompt: "${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}"`,
-  );
-  console.log(`[Generator] Options:`, {
-    rows: opts.rows,
-    columns: opts.columns,
-    outputPath: opts.outputPath,
-    existing: opts.existing,
-    maxConcurrentBatches: opts.maxConcurrentBatches,
-  });
-
-  // Normalize cell definitions
-  const cellDefs: CellDefinition[] =
-    cells?.map(cell => {
-      if (typeof cell === 'string') {
-        return { id: kebabCase(cell), name: cell };
-      }
-      return cell;
-    }) ?? [];
-
-  // If no cells provided, generate a single sprite sheet with default naming
-  const totalCells = opts.rows * opts.columns;
-  if (cellDefs.length === 0) {
-    for (let i = 0; i < totalCells; i++) {
-      cellDefs.push({ id: `image-${i + 1}`, name: `Image ${i + 1}` });
-    }
-  }
-
-  console.log(`[Generator] Processing ${cellDefs.length} cells in batches of ${totalCells}`);
-
-  // Create output directories
-  await ensureDirectoryExists(join(opts.outputPath, 'batches'));
-  await ensureDirectoryExists(join(opts.outputPath, 'images'));
-
-  // Split cells into batches
-  const batches: CellDefinition[][] = [];
-  for (let i = 0; i < cellDefs.length; i += totalCells) {
-    batches.push(cellDefs.slice(i, i + totalCells));
-  }
-
-  console.log(`[Generator] Created ${batches.length} batch(es)`);
-
-  // Create rate limiter (20 requests per 10 seconds)
-  const rateLimiter = new RateLimiter(20, 10_000);
-
-  // Create batch processing tasks
-  const batchTasks = batches.map((batchCells, batchIndex) => async () => {
-    try {
-      return await processBatch(batchIndex, batchCells, apiToken, prompt, opts, rateLimiter);
-    } catch (error) {
-      console.error(`[Batch ${batchIndex + 1}] ❌ Failed: ${(error as Error).message}`);
-      return {
-        batchIndex,
-        batchImagePath: '',
-        imagePaths: [],
-        cells: batchCells,
-        success: false,
-        error: error as Error,
-      } as BatchResult;
-    }
-  });
-
-  // Execute batches in parallel with rate limiting
-  console.log(
-    `[Generator] Processing ${batches.length} batches with max ${opts.maxConcurrentBatches} concurrent...`,
-  );
-
-  const results = await executeWithRateLimit<BatchResult>(
-    batchTasks,
-    rateLimiter,
-    opts.maxConcurrentBatches,
-  );
-
-  // Aggregate results
-  const batchImagePaths: string[] = [];
-  const imagePaths: string[] = [];
-  const errors: Array<{ batchIndex: number; error: Error }> = [];
-
-  for (const result of results) {
-    if (result.status === 'fulfilled') {
-      const batchResult = result.value;
-      if (batchResult.success) {
-        batchImagePaths.push(batchResult.batchImagePath);
-        imagePaths.push(...batchResult.imagePaths);
-      } else if (batchResult.error) {
-        errors.push({ batchIndex: batchResult.batchIndex, error: batchResult.error });
-      }
-    } else {
-      errors.push({ batchIndex: -1, error: result.reason as Error });
-    }
-  }
-
-  const elapsed = (Date.now() - startTime) / 1000;
-  const successfulBatches = batches.length - errors.length;
-
-  console.log(`[Generator] ✅ Completed in ${elapsed.toFixed(1)}s`);
-  console.log(
-    `[Generator] Results: ${successfulBatches}/${batches.length} batches, ${imagePaths.length} images`,
-  );
-
-  if (errors.length > 0) {
-    console.warn(`[Generator] ⚠️ ${errors.length} batch(es) failed:`);
-    for (const { batchIndex, error } of errors) {
-      console.warn(`  - Batch ${batchIndex + 1}: ${error.message}`);
-    }
-  }
-
-  return {
-    batchImagePaths,
-    imagePaths,
-    errors,
-    totalBatches: batches.length,
-    successfulBatches,
   };
 }
