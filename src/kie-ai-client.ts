@@ -56,31 +56,150 @@ export interface KieAiImageGenerationResult {
   resultUrls: string[];
 }
 
+export class KieApiError extends Error {
+  constructor(
+    message: string,
+    public readonly statusCode?: number,
+    public readonly code?: number,
+    public readonly retryable: boolean = false,
+  ) {
+    super(message);
+    this.name = 'KieApiError';
+  }
+}
+
+export class TaskTimeoutError extends Error {
+  constructor(
+    public readonly taskId: string,
+    public readonly maxAttempts: number,
+  ) {
+    super(`Task ${taskId} timed out after ${maxAttempts} polling attempts`);
+    this.name = 'TaskTimeoutError';
+  }
+}
+
+export class TaskFailedError extends Error {
+  constructor(
+    public readonly taskId: string,
+    public readonly failCode: string,
+    public readonly failMsg: string,
+  ) {
+    super(`Task ${taskId} failed: ${failMsg} (code: ${failCode})`);
+    this.name = 'TaskFailedError';
+  }
+}
+
 /**
- * @see
+ * Delays execution for the specified number of milliseconds.
+ */
+async function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Calculates exponential backoff delay with jitter.
+ */
+function getBackoffDelay(
+  attempt: number,
+  baseDelay: number = 1000,
+  maxDelay: number = 30000,
+): number {
+  const exponentialDelay = Math.min(maxDelay, baseDelay * 2 ** attempt);
+  const jitter = exponentialDelay * 0.1 * Math.random();
+  return exponentialDelay + jitter;
+}
+
+/**
+ * Creates a new image generation task with retry logic.
+ * @see https://docs.kie.ai/market/google/nano-banana
  */
 export async function createTask(
   payload: KieAiCreateTaskRequestBody,
   apiToken: string,
+  maxRetries: number = 3,
 ): Promise<KieAiCreateTaskResponse> {
-  const response = await fetch('https://api.kie.ai/v1/tasks', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiToken}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  let lastError: Error | undefined;
 
-  if (!response.ok) {
-    throw new Error(`Failed to create task: ${response.statusText}`);
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`[KIE API] Creating task (attempt ${attempt + 1}/${maxRetries + 1})...`);
+
+      const response = await fetch('https://api.kie.ai/api/v1/jobs/createTask', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      // Handle rate limiting
+      if (response.status === 429) {
+        const retryAfter = response.headers.get('Retry-After');
+        const waitTime = retryAfter
+          ? Number.parseInt(retryAfter, 10) * 1000
+          : getBackoffDelay(attempt);
+        console.warn(`[KIE API] Rate limited (429). Waiting ${waitTime}ms before retry...`);
+        await delay(waitTime);
+        continue;
+      }
+
+      // Handle server errors with retry
+      if (response.status >= 500) {
+        const waitTime = getBackoffDelay(attempt);
+        console.warn(
+          `[KIE API] Server error (${response.status}). Waiting ${waitTime}ms before retry...`,
+        );
+        await delay(waitTime);
+        continue;
+      }
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new KieApiError(
+          `Failed to create task: ${response.statusText} - ${errorBody}`,
+          response.status,
+          undefined,
+          false,
+        );
+      }
+
+      const data = (await response.json()) as KieAiCreateTaskResponse;
+
+      if (data.code !== 0 && data.code !== 200) {
+        throw new KieApiError(
+          `API error: ${data.msg}`,
+          response.status,
+          data.code,
+          data.code === 429,
+        );
+      }
+
+      console.log(`[KIE API] Task created successfully: ${data.data.taskId}`);
+      return data;
+    } catch (error) {
+      lastError = error as Error;
+
+      // Don't retry on non-retryable errors
+      if (error instanceof KieApiError && !error.retryable) {
+        throw error;
+      }
+
+      if (attempt < maxRetries) {
+        const waitTime = getBackoffDelay(attempt);
+        console.warn(
+          `[KIE API] Request failed: ${(error as Error).message}. Retrying in ${waitTime}ms...`,
+        );
+        await delay(waitTime);
+      }
+    }
   }
 
-  const data = await response.json();
-  return data as KieAiCreateTaskResponse;
+  throw lastError ?? new Error('Failed to create task after all retries');
 }
 
 /**
+ * Polls for task completion status with retry logic.
  * @see https://docs.kie.ai/market/common/get-task-detail
  */
 export async function pollTaskStatus(
@@ -89,33 +208,80 @@ export async function pollTaskStatus(
   maxAttempts: number = 60,
   interval: number = 5_000,
 ): Promise<KieAiImageGenerationResult> {
+  let consecutiveErrors = 0;
+  const maxConsecutiveErrors = 5;
+
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const response = await fetch(`https://api.kie.ai/api/v1/jobs/recordInfo?taskId=${taskId}`, {
-      headers: { Authorization: `Bearer ${apiToken}` },
-    });
+    try {
+      const response = await fetch(`https://api.kie.ai/api/v1/jobs/recordInfo?taskId=${taskId}`, {
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    const result = (await response.json()) as KieAiTaskStatusResponse;
-    const { state, resultJson, failMsg } = result.data;
+      // Handle rate limiting during polling
+      if (response.status === 429) {
+        const retryAfter = response.headers.get('Retry-After');
+        const waitTime = retryAfter ? Number.parseInt(retryAfter, 10) * 1000 : interval * 2;
+        console.warn(`[KIE API] Rate limited during polling. Waiting ${waitTime}ms...`);
+        await delay(waitTime);
+        continue;
+      }
 
-    console.log(`Attempt ${attempt + 1}: State = ${state}`);
+      if (!response.ok) {
+        consecutiveErrors++;
+        if (consecutiveErrors >= maxConsecutiveErrors) {
+          throw new KieApiError(
+            `Failed to poll task status after ${maxConsecutiveErrors} consecutive errors`,
+            response.status,
+          );
+        }
+        console.warn(`[KIE API] Poll request failed (${response.status}). Retrying...`);
+        await delay(interval);
+        continue;
+      }
 
-    if (state === 'success') {
-      const results = JSON.parse(resultJson) as KieAiImageGenerationResult;
-      console.log('✅ Task completed!');
-      console.log('Results:', results.resultUrls);
-      return results;
+      // Reset consecutive error counter on successful request
+      consecutiveErrors = 0;
+
+      const result = (await response.json()) as KieAiTaskStatusResponse;
+      const { state, resultJson, failMsg, failCode } = result.data;
+
+      console.log(`[KIE API] Task ${taskId} - Attempt ${attempt + 1}: State = ${state}`);
+
+      if (state === 'success') {
+        const results = JSON.parse(resultJson) as KieAiImageGenerationResult;
+        console.log(`[KIE API] ✅ Task ${taskId} completed! URLs: ${results.resultUrls.length}`);
+        return results;
+      }
+
+      if (state === 'fail') {
+        console.error(`[KIE API] ❌ Task ${taskId} failed: ${failMsg}`);
+        throw new TaskFailedError(taskId, failCode, failMsg);
+      }
+
+      // Still processing, wait before next poll
+      await delay(interval);
+    } catch (error) {
+      // Re-throw known errors
+      if (error instanceof TaskFailedError || error instanceof KieApiError) {
+        throw error;
+      }
+
+      consecutiveErrors++;
+      if (consecutiveErrors >= maxConsecutiveErrors) {
+        throw new KieApiError(
+          `Polling failed after ${maxConsecutiveErrors} consecutive errors: ${(error as Error).message}`,
+        );
+      }
+
+      console.warn(`[KIE API] Poll error: ${(error as Error).message}. Retrying...`);
+      await delay(interval);
     }
-
-    if (state === 'fail') {
-      console.error('❌ Task failed:', failMsg);
-      throw new Error(failMsg);
-    }
-
-    // Still processing, wait before next poll
-    await new Promise(resolve => setTimeout(resolve, interval));
   }
 
-  throw new Error('Task timed out after maximum attempts');
+  throw new TaskTimeoutError(taskId, maxAttempts);
 }
 
 export interface KieAiApiImageGenerationOptions {
