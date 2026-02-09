@@ -16,12 +16,16 @@ Possibly the quickest, easiest and most cost-effective way to generate large bat
 
 ## Examples
 
-|                                                    |                                                             |
-| -------------------------------------------------- | ----------------------------------------------------------- |
-| **Cats**                                           | **Product Photos**                                          |
-| ![Cats](docs/examples/cats-image-sprite.jpg)       | ![Product Photos](docs/examples/furniture-image-sprite.jpg) |
-| **Avatars**                                        | **Logo / Icon Design**                                      |
-| ![Avatars](docs/examples/avatars-image-sprite.jpg) | ![Logos](docs/examples/logos-image-sprite.jpg)              |
+|                                                            |                                                             |
+| ---------------------------------------------------------- | ----------------------------------------------------------- |
+| **Cats**                                                   | **Product Photos**                                          |
+| ![Cats](docs/examples/cats-image-sprite.jpg)               | ![Product Photos](docs/examples/furniture-image-sprite.jpg) |
+| **Avatars**                                                | **Animals**                                                 |
+| ![Avatars](docs/examples/avatars-image-sprite.jpg)         | ![Animals](docs/examples/animals-image-sprite.jpg)          |
+| **Game Assets**                                            | **Logo / Icon Design**                                      |
+| ![Game Assets](docs/examples/game-assets-image-sprite.jpg) | ![Logos](docs/examples/logos-image-sprite.jpg)              |
+
+See [integration.test.ts](test/integration.test.ts) for example prompts and usage.
 
 ## Features
 
