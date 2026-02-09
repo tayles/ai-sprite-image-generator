@@ -1,3 +1,5 @@
+import { createLogger, type Logger } from './utils';
+
 export type AspectRatio =
   | '1:1'
   | '2:3'
@@ -117,14 +119,17 @@ export async function createTask(
   payload: KieAiCreateTaskRequestBody,
   apiToken: string,
   maxRetries: number = 3,
+  log: Logger = createLogger(),
 ): Promise<KieAiCreateTaskResponse> {
   let lastError: Error | undefined;
+  const url = 'https://api.kie.ai/api/v1/jobs/createTask';
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`[KIE API] Creating task (attempt ${attempt + 1}/${maxRetries + 1})...`);
+      log.log(`[KIE API] Creating task (attempt ${attempt + 1}/${maxRetries + 1})...`);
+      log.fetch('POST', url);
 
-      const response = await fetch('https://api.kie.ai/api/v1/jobs/createTask', {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -139,7 +144,7 @@ export async function createTask(
         const waitTime = retryAfter
           ? Number.parseInt(retryAfter, 10) * 1000
           : getBackoffDelay(attempt);
-        console.warn(`[KIE API] Rate limited (429). Waiting ${waitTime}ms before retry...`);
+        log.warn(`[KIE API] Rate limited (429). Waiting ${waitTime}ms before retry...`);
         await delay(waitTime);
         continue;
       }
@@ -147,7 +152,7 @@ export async function createTask(
       // Handle server errors with retry
       if (response.status >= 500) {
         const waitTime = getBackoffDelay(attempt);
-        console.warn(
+        log.warn(
           `[KIE API] Server error (${response.status}). Waiting ${waitTime}ms before retry...`,
         );
         await delay(waitTime);
@@ -175,7 +180,7 @@ export async function createTask(
         );
       }
 
-      console.log(`[KIE API] Task created successfully: ${data.data.taskId}`);
+      log.log(`[KIE API] Task created successfully: ${data.data.taskId}`);
       return data;
     } catch (error) {
       lastError = error as Error;
@@ -187,7 +192,7 @@ export async function createTask(
 
       if (attempt < maxRetries) {
         const waitTime = getBackoffDelay(attempt);
-        console.warn(
+        log.warn(
           `[KIE API] Request failed: ${(error as Error).message}. Retrying in ${waitTime}ms...`,
         );
         await delay(waitTime);
@@ -207,13 +212,16 @@ export async function pollTaskStatus(
   apiToken: string,
   maxAttempts: number = 60,
   interval: number = 5_000,
+  log: Logger = createLogger(),
 ): Promise<KieAiImageGenerationResult> {
   let consecutiveErrors = 0;
   const maxConsecutiveErrors = 5;
+  const url = `https://api.kie.ai/api/v1/jobs/recordInfo?taskId=${taskId}`;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      const response = await fetch(`https://api.kie.ai/api/v1/jobs/recordInfo?taskId=${taskId}`, {
+      log.fetch('GET', url);
+      const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${apiToken}`,
           'Content-Type': 'application/json',
@@ -224,7 +232,7 @@ export async function pollTaskStatus(
       if (response.status === 429) {
         const retryAfter = response.headers.get('Retry-After');
         const waitTime = retryAfter ? Number.parseInt(retryAfter, 10) * 1000 : interval * 2;
-        console.warn(`[KIE API] Rate limited during polling. Waiting ${waitTime}ms...`);
+        log.warn(`[KIE API] Rate limited during polling. Waiting ${waitTime}ms...`);
         await delay(waitTime);
         continue;
       }
@@ -237,7 +245,7 @@ export async function pollTaskStatus(
             response.status,
           );
         }
-        console.warn(`[KIE API] Poll request failed (${response.status}). Retrying...`);
+        log.warn(`[KIE API] Poll request failed (${response.status}). Retrying...`);
         await delay(interval);
         continue;
       }
@@ -248,16 +256,16 @@ export async function pollTaskStatus(
       const result = (await response.json()) as KieAiTaskStatusResponse;
       const { state, resultJson, failMsg, failCode } = result.data;
 
-      console.log(`[KIE API] Task ${taskId} - Attempt ${attempt + 1}: State = ${state}`);
+      log.log(`[KIE API] Task ${taskId} - Attempt ${attempt + 1}: State = ${state}`);
 
       if (state === 'success') {
         const results = JSON.parse(resultJson) as KieAiImageGenerationResult;
-        console.log(`[KIE API] ✅ Task ${taskId} completed! URLs: ${results.resultUrls.length}`);
+        log.log(`[KIE API] ✅ Task ${taskId} completed! URLs: ${results.resultUrls.length}`);
         return results;
       }
 
       if (state === 'fail') {
-        console.error(`[KIE API] ❌ Task ${taskId} failed: ${failMsg}`);
+        log.error(`[KIE API] ❌ Task ${taskId} failed: ${failMsg}`);
         throw new TaskFailedError(taskId, failCode, failMsg);
       }
 
@@ -276,7 +284,7 @@ export async function pollTaskStatus(
         );
       }
 
-      console.warn(`[KIE API] Poll error: ${(error as Error).message}. Retrying...`);
+      log.warn(`[KIE API] Poll error: ${(error as Error).message}. Retrying...`);
       await delay(interval);
     }
   }
@@ -290,6 +298,7 @@ export interface KieAiApiImageGenerationOptions {
   resolution: Resolution;
   outputFormat: OutputFormat;
   model?: string;
+  verbose?: boolean;
 }
 
 export const DEFAULT_IMAGE_OPTIONS: KieAiApiImageGenerationOptions = {
@@ -298,6 +307,7 @@ export const DEFAULT_IMAGE_OPTIONS: KieAiApiImageGenerationOptions = {
   resolution: '4K',
   outputFormat: 'png',
   model: 'nano-banana-pro',
+  verbose: true,
 };
 
 export async function generateImage(
@@ -306,6 +316,7 @@ export async function generateImage(
   options: KieAiApiImageGenerationOptions,
 ): Promise<string> {
   const opts = { ...DEFAULT_IMAGE_OPTIONS, ...options };
+  const log = createLogger(opts.verbose);
 
   const payload: KieAiCreateTaskRequestBody = {
     model: opts.model!,
@@ -319,10 +330,16 @@ export async function generateImage(
     },
   };
 
-  const taskResponse = await createTask(payload, apiToken);
+  const taskResponse = await createTask(payload, apiToken, 3, log);
   const taskId = taskResponse.data.taskId;
-  console.log(`Task created with ID: ${taskId}`);
+  log.log(`Task created with ID: ${taskId}`);
 
-  const result = await pollTaskStatus(taskId, apiToken, undefined, opts.checkFrequencySecs! * 1000);
+  const result = await pollTaskStatus(
+    taskId,
+    apiToken,
+    undefined,
+    opts.checkFrequencySecs! * 1000,
+    log,
+  );
   return result.resultUrls[0]!;
 }

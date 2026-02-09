@@ -20,6 +20,8 @@ export interface ImageGenerationOptions {
   maxRetries: number;
   /** Model to use for image generation */
   model: string;
+  /** Enable verbose console logging (default: true) */
+  verbose: boolean;
 }
 
 export const DEFAULT_OPTIONS: ImageGenerationOptions = {
@@ -37,6 +39,7 @@ export const DEFAULT_OPTIONS: ImageGenerationOptions = {
   maxPollAttempts: 60,
   maxRetries: 3,
   model: 'nano-banana-pro',
+  verbose: true,
 };
 
 export interface CellDefinition {

@@ -10,3 +10,5 @@ export type {
 export { DEFAULT_OPTIONS } from './types';
 
 export { KieApiError, TaskTimeoutError, TaskFailedError } from './kie-ai-client';
+
+export { createLogger, Logger } from './utils';

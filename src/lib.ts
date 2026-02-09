@@ -18,7 +18,7 @@ import {
   DEFAULT_OPTIONS,
   type BatchResult,
 } from './types';
-import { kebabCase } from './utils';
+import { kebabCase, createLogger, type Logger } from './utils';
 
 /**
  * Generates sprite sheet images from a prompt with optional cell definitions.
@@ -37,13 +37,12 @@ export async function generateImages(
   cells?: CellDefinitions,
 ): Promise<ImageGenerationResult> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
+  const log = createLogger(opts.verbose);
   const startTime = Date.now();
 
-  console.log(`[Generator] Starting image generation...`);
-  console.log(
-    `[Generator] Prompt: "${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}"`,
-  );
-  console.log(`[Generator] Options:`, {
+  log.log(`[Generator] Starting image generation...`);
+  log.log(`[Generator] Prompt: "${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}"`);
+  log.log(`[Generator] Options:`, {
     rows: opts.rows,
     columns: opts.columns,
     outputPath: opts.outputPath,
@@ -68,11 +67,11 @@ export async function generateImages(
     }
   }
 
-  console.log(`[Generator] Processing ${cellDefs.length} cells in batches of ${totalCells}`);
+  log.log(`[Generator] Processing ${cellDefs.length} cells in batches of ${totalCells}`);
 
   // Create output directories
-  await ensureDirectoryExists(join(opts.outputPath, 'batches'));
-  await ensureDirectoryExists(join(opts.outputPath, 'images'));
+  await ensureDirectoryExists(join(opts.outputPath, 'batches'), log);
+  await ensureDirectoryExists(join(opts.outputPath, 'images'), log);
 
   // Split cells into batches
   const batches: CellDefinition[][] = [];
@@ -80,17 +79,17 @@ export async function generateImages(
     batches.push(cellDefs.slice(i, i + totalCells));
   }
 
-  console.log(`[Generator] Created ${batches.length} batch(es)`);
+  log.log(`[Generator] Created ${batches.length} batch(es)`);
 
   // Create rate limiter (20 requests per 10 seconds)
-  const rateLimiter = new RateLimiter(20, 10_000);
+  const rateLimiter = new RateLimiter(20, 10_000, log);
 
   // Create batch processing tasks
   const batchTasks = batches.map((batchCells, batchIndex) => async () => {
     try {
-      return await processBatch(batchIndex, batchCells, apiToken, prompt, opts, rateLimiter);
+      return await processBatch(batchIndex, batchCells, apiToken, prompt, opts, rateLimiter, log);
     } catch (error) {
-      console.error(`[Batch ${batchIndex + 1}] ❌ Failed: ${(error as Error).message}`);
+      log.error(`[Batch ${batchIndex + 1}] ❌ Failed: ${(error as Error).message}`);
       return {
         batchIndex,
         batchImagePath: '',
@@ -103,7 +102,7 @@ export async function generateImages(
   });
 
   // Execute batches in parallel with rate limiting
-  console.log(
+  log.log(
     `[Generator] Processing ${batches.length} batches with max ${opts.maxConcurrentBatches} concurrent...`,
   );
 
@@ -135,15 +134,15 @@ export async function generateImages(
   const elapsed = (Date.now() - startTime) / 1000;
   const successfulBatches = batches.length - errors.length;
 
-  console.log(`[Generator] ✅ Completed in ${elapsed.toFixed(1)}s`);
-  console.log(
+  log.log(`[Generator] ✅ Completed in ${elapsed.toFixed(1)}s`);
+  log.log(
     `[Generator] Results: ${successfulBatches}/${batches.length} batches, ${imagePaths.length} images`,
   );
 
   if (errors.length > 0) {
-    console.warn(`[Generator] ⚠️ ${errors.length} batch(es) failed:`);
+    log.warn(`[Generator] ⚠️ ${errors.length} batch(es) failed:`);
     for (const { batchIndex, error } of errors) {
-      console.warn(`  - Batch ${batchIndex + 1}: ${error.message}`);
+      log.warn(`  - Batch ${batchIndex + 1}: ${error.message}`);
     }
   }
 
@@ -184,9 +183,12 @@ Generate a seamless sprite sheet where each cell is visually distinct yet stylis
 /**
  * Ensures the output directory exists, creating it if necessary.
  */
-export async function ensureDirectoryExists(dirPath: string): Promise<void> {
+export async function ensureDirectoryExists(
+  dirPath: string,
+  log: Logger = createLogger(),
+): Promise<void> {
   if (!existsSync(dirPath)) {
-    console.log(`[FileSystem] Creating directory: ${dirPath}`);
+    log.log(`[FileSystem] Creating directory: ${dirPath}`);
     await mkdir(dirPath, { recursive: true });
   }
 }
@@ -198,16 +200,18 @@ export async function downloadImage(
   url: string,
   outputPath: string,
   maxRetries: number = 3,
+  log: Logger = createLogger(),
 ): Promise<void> {
-  await ensureDirectoryExists(dirname(outputPath));
+  await ensureDirectoryExists(dirname(outputPath), log);
 
   let lastError: Error | undefined;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      console.log(
+      log.log(
         `[Download] Fetching image from ${url} (attempt ${attempt + 1}/${maxRetries + 1})...`,
       );
+      log.fetch('GET', url);
 
       const response = await fetch(url);
 
@@ -219,15 +223,13 @@ export async function downloadImage(
       const buffer = new Uint8Array(arrayBuffer);
 
       await writeFile(outputPath, buffer);
-      console.log(`[Download] ✅ Saved image to ${outputPath} (${buffer.length} bytes)`);
+      log.log(`[Download] ✅ Saved image to ${outputPath} (${buffer.length} bytes)`);
       return;
     } catch (error) {
       lastError = error as Error;
       if (attempt < maxRetries) {
         const waitTime = 1000 * 2 ** attempt;
-        console.warn(
-          `[Download] Failed: ${(error as Error).message}. Retrying in ${waitTime}ms...`,
-        );
+        log.warn(`[Download] Failed: ${(error as Error).message}. Retrying in ${waitTime}ms...`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
       }
     }
@@ -246,10 +248,11 @@ export async function splitSpriteSheet(
   outputFormat: OutputFormat = 'png',
   rows: number = 5,
   columns: number = 5,
+  log: Logger = createLogger(),
 ): Promise<string[]> {
-  await ensureDirectoryExists(outputPath);
+  await ensureDirectoryExists(outputPath, log);
 
-  console.log(`[SpriteSheet] Splitting sprite into ${rows}x${columns} grid...`);
+  log.log(`[SpriteSheet] Splitting sprite into ${rows}x${columns} grid...`);
 
   const metadata = await sharp(spriteBuffer).metadata();
   const { width, height } = metadata;
@@ -261,7 +264,7 @@ export async function splitSpriteSheet(
   const cellWidth = Math.floor(width / columns);
   const cellHeight = Math.floor(height / rows);
 
-  console.log(`[SpriteSheet] Image: ${width}x${height}, Cell size: ${cellWidth}x${cellHeight}`);
+  log.log(`[SpriteSheet] Image: ${width}x${height}, Cell size: ${cellWidth}x${cellHeight}`);
 
   const totalCells = rows * columns;
   const outputPaths: string[] = [];
@@ -291,11 +294,9 @@ export async function splitSpriteSheet(
           .toFile(cellOutputPath);
 
         outputPaths.push(cellOutputPath);
-        console.log(
-          `[SpriteSheet] ✅ Saved cell ${cellIndex + 1}/${totalCells}: ${cellOutputPath}`,
-        );
+        log.log(`[SpriteSheet] ✅ Saved cell ${cellIndex + 1}/${totalCells}: ${cellOutputPath}`);
       } catch (error) {
-        console.error(
+        log.error(
           `[SpriteSheet] ❌ Failed to extract cell ${cellIndex + 1}: ${(error as Error).message}`,
         );
         throw error;
@@ -316,6 +317,7 @@ async function processBatch(
   userPrompt: string,
   opts: ImageGenerationOptions,
   rateLimiter: RateLimiter,
+  log: Logger,
 ): Promise<BatchResult> {
   const batchImgPath = join(
     opts.outputPath,
@@ -325,7 +327,7 @@ async function processBatch(
 
   // Check if batch image already exists (skip mode)
   if (opts.existing === 'skip' && existsSync(batchImgPath)) {
-    console.log(`[Batch ${batchIndex + 1}] Image already exists, skipping generation...`);
+    log.log(`[Batch ${batchIndex + 1}] Image already exists, skipping generation...`);
 
     // Still need to split if individual images don't exist
     try {
@@ -339,6 +341,7 @@ async function processBatch(
         opts.outputFormat,
         opts.rows,
         opts.columns,
+        log,
       );
 
       return {
@@ -349,14 +352,14 @@ async function processBatch(
         success: true,
       };
     } catch (error) {
-      console.error(
+      log.error(
         `[Batch ${batchIndex + 1}] Failed to process existing image: ${(error as Error).message}`,
       );
       // Continue to regenerate
     }
   }
 
-  console.log(`[Batch ${batchIndex + 1}] Starting generation for ${batchCells.length} cells...`);
+  log.log(`[Batch ${batchIndex + 1}] Starting generation for ${batchCells.length} cells...`);
 
   // Build the optimized prompt
   const batchPrompt = buildSpritePrompt(
@@ -380,23 +383,29 @@ async function processBatch(
     },
   };
 
-  const taskResponse = await createTask(payload, apiToken, opts.maxRetries);
+  const taskResponse = await createTask(payload, apiToken, opts.maxRetries, log);
   const taskId = taskResponse.data.taskId;
 
-  console.log(`[Batch ${batchIndex + 1}] Task created: ${taskId}`);
+  log.log(`[Batch ${batchIndex + 1}] Task created: ${taskId}`);
 
   // Poll for completion
-  const result = await pollTaskStatus(taskId, apiToken, opts.maxPollAttempts, opts.pollIntervalMs);
+  const result = await pollTaskStatus(
+    taskId,
+    apiToken,
+    opts.maxPollAttempts,
+    opts.pollIntervalMs,
+    log,
+  );
 
   if (!result.resultUrls || result.resultUrls.length === 0) {
     throw new Error(`No image URLs returned for batch ${batchIndex + 1}`);
   }
 
   const imageUrl = result.resultUrls[0]!;
-  console.log(`[Batch ${batchIndex + 1}] Image ready: ${imageUrl}`);
+  log.log(`[Batch ${batchIndex + 1}] Image ready: ${imageUrl}`);
 
   // Download the sprite sheet
-  await downloadImage(imageUrl, batchImgPath, opts.maxRetries);
+  await downloadImage(imageUrl, batchImgPath, opts.maxRetries, log);
 
   // Load the image for splitting
   const { data: spriteBuffer } = await sharp(batchImgPath).toBuffer({ resolveWithObject: true });
@@ -409,9 +418,10 @@ async function processBatch(
     opts.outputFormat,
     opts.rows,
     opts.columns,
+    log,
   );
 
-  console.log(`[Batch ${batchIndex + 1}] ✅ Completed: ${imagePaths.length} images generated`);
+  log.log(`[Batch ${batchIndex + 1}] ✅ Completed: ${imagePaths.length} images generated`);
 
   return {
     batchIndex,

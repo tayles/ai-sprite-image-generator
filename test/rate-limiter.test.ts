@@ -1,10 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 
 import { RateLimiter, executeWithRateLimit } from '../src/rate-limiter';
+import { createLogger } from '../src/utils';
+
+// Silent logger for tests
+const log = createLogger(false);
 
 describe('RateLimiter', () => {
   test('allows requests within limit', async () => {
-    const limiter = new RateLimiter(5, 1000);
+    const limiter = new RateLimiter(5, 1000, log);
 
     const start = Date.now();
     for (let i = 0; i < 5; i++) {
@@ -17,7 +21,7 @@ describe('RateLimiter', () => {
   });
 
   test('enforces rate limit', async () => {
-    const limiter = new RateLimiter(2, 500);
+    const limiter = new RateLimiter(2, 500, log);
 
     // Use up the limit
     await limiter.acquire();
@@ -32,7 +36,7 @@ describe('RateLimiter', () => {
   });
 
   test('reports available slots correctly', async () => {
-    const limiter = new RateLimiter(5, 1000);
+    const limiter = new RateLimiter(5, 1000, log);
 
     expect(limiter.availableSlots()).toBe(5);
 
@@ -46,7 +50,7 @@ describe('RateLimiter', () => {
 
 describe('executeWithRateLimit', () => {
   test('executes all tasks', async () => {
-    const limiter = new RateLimiter(10, 1000);
+    const limiter = new RateLimiter(10, 1000, log);
     const values = [1, 2, 3, 4, 5];
     const tasks = values.map(v => async () => v * 2);
 
@@ -60,7 +64,7 @@ describe('executeWithRateLimit', () => {
   });
 
   test('handles task failures', async () => {
-    const limiter = new RateLimiter(10, 1000);
+    const limiter = new RateLimiter(10, 1000, log);
     const tasks = [
       async () => 1,
       async () => {
@@ -77,7 +81,7 @@ describe('executeWithRateLimit', () => {
   });
 
   test('respects concurrency limit', async () => {
-    const limiter = new RateLimiter(10, 1000);
+    const limiter = new RateLimiter(10, 1000, log);
     let maxConcurrent = 0;
     let currentConcurrent = 0;
 

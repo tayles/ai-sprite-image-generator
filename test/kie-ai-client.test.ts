@@ -7,6 +7,10 @@ import {
   TaskFailedError,
   TaskTimeoutError,
 } from '../src/kie-ai-client';
+import { createLogger } from '../src/utils';
+
+// Silent logger for tests
+const log = createLogger(false);
 
 // Store original fetch for restore
 let originalFetch: typeof globalThis.fetch;
@@ -62,6 +66,8 @@ describe('KIE API Client', () => {
           },
         },
         'test-api-token',
+        3,
+        log,
       );
 
       expect(result.data.taskId).toBe('test-task-123');
@@ -99,6 +105,7 @@ describe('KIE API Client', () => {
           },
           'test-token',
           0, // no retries
+          log,
         ),
       ).rejects.toThrow(KieApiError);
     });
@@ -142,6 +149,7 @@ describe('KIE API Client', () => {
         },
         'test-token',
         1,
+        log,
       );
 
       expect(callCount).toBe(2);
@@ -169,7 +177,7 @@ describe('KIE API Client', () => {
         ),
       );
 
-      const result = await pollTaskStatus('task-123', 'test-token', 5, 10);
+      const result = await pollTaskStatus('task-123', 'test-token', 5, 10, log);
 
       expect(result.resultUrls).toEqual(['https://example.com/image.png']);
     });
@@ -193,7 +201,7 @@ describe('KIE API Client', () => {
       );
 
       // oxlint-disable-next-line typescript-eslint/await-thenable
-      await expect(pollTaskStatus('task-123', 'test-token', 5, 10)).rejects.toThrow(
+      await expect(pollTaskStatus('task-123', 'test-token', 5, 10, log)).rejects.toThrow(
         TaskFailedError,
       );
     });
@@ -215,7 +223,7 @@ describe('KIE API Client', () => {
       );
 
       // oxlint-disable-next-line typescript-eslint/await-thenable
-      await expect(pollTaskStatus('task-123', 'test-token', 2, 10)).rejects.toThrow(
+      await expect(pollTaskStatus('task-123', 'test-token', 2, 10, log)).rejects.toThrow(
         TaskTimeoutError,
       );
     });
@@ -240,7 +248,7 @@ describe('KIE API Client', () => {
         return Promise.resolve(new Response(JSON.stringify(response), { status: 200 }));
       });
 
-      const result = await pollTaskStatus('task-123', 'test-token', 10, 10);
+      const result = await pollTaskStatus('task-123', 'test-token', 10, 10, log);
 
       expect(callCount).toBe(3);
       expect(result.resultUrls).toEqual(['https://example.com/done.png']);

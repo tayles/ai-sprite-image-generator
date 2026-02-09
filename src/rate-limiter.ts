@@ -1,3 +1,5 @@
+import { createLogger, type Logger } from './utils';
+
 /**
  * Rate limiter that enforces a maximum number of requests per time window.
  * Used to respect KIE API limits (20 requests per 10 seconds).
@@ -6,10 +8,12 @@ export class RateLimiter {
   private timestamps: number[] = [];
   private readonly maxRequests: number;
   private readonly windowMs: number;
+  private readonly log: Logger;
 
-  constructor(maxRequests: number = 20, windowMs: number = 10_000) {
+  constructor(maxRequests: number = 20, windowMs: number = 10_000, log: Logger = createLogger()) {
     this.maxRequests = maxRequests;
     this.windowMs = windowMs;
+    this.log = log;
   }
 
   /**
@@ -26,7 +30,9 @@ export class RateLimiter {
       const oldestTimestamp = this.timestamps[0]!;
       const waitTime = this.windowMs - (now - oldestTimestamp) + 10; // +10ms buffer
 
-      console.log(`[RateLimiter] Rate limit reached. Waiting ${waitTime}ms before next request...`);
+      this.log.log(
+        `[RateLimiter] Rate limit reached. Waiting ${waitTime}ms before next request...`,
+      );
       await new Promise(resolve => setTimeout(resolve, waitTime));
 
       // Recursively try again after waiting

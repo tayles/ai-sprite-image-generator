@@ -11,6 +11,10 @@ import {
   generateImages,
   splitSpriteSheet,
 } from '../src/lib';
+import { createLogger } from '../src/utils';
+
+// Silent logger for tests
+const log = createLogger(false);
 
 // Store original fetch for restore
 let originalFetch: typeof globalThis.fetch;
@@ -76,7 +80,15 @@ describe('splitSpriteSheet', () => {
     const spriteBuffer = await createTestSpriteBuffer(500, 500);
     const tempDir = path.join('/tmp', 'test-sprite-split-' + Date.now());
 
-    const paths = await splitSpriteSheet(spriteBuffer, tempDir, ['a', 'b', 'c', 'd'], 'png', 2, 2);
+    const paths = await splitSpriteSheet(
+      spriteBuffer,
+      tempDir,
+      ['a', 'b', 'c', 'd'],
+      'png',
+      2,
+      2,
+      log,
+    );
 
     expect(paths).toHaveLength(4);
     expect(paths[0]).toContain('a.png');
@@ -92,7 +104,7 @@ describe('splitSpriteSheet', () => {
     const spriteBuffer = await createTestSpriteBuffer(400, 400);
     const tempDir = path.join('/tmp', 'test-sprite-default-' + Date.now());
 
-    const paths = await splitSpriteSheet(spriteBuffer, tempDir, [], 'png', 2, 2);
+    const paths = await splitSpriteSheet(spriteBuffer, tempDir, [], 'png', 2, 2, log);
 
     expect(paths[0]).toContain('image-1.png');
     expect(paths[1]).toContain('image-2.png');
@@ -105,7 +117,7 @@ describe('splitSpriteSheet', () => {
     const spriteBuffer = await createTestSpriteBuffer(200, 200);
     const tempDir = path.join('/tmp', 'test-sprite-jpg-' + Date.now());
 
-    const paths = await splitSpriteSheet(spriteBuffer, tempDir, ['test'], 'jpg', 1, 1);
+    const paths = await splitSpriteSheet(spriteBuffer, tempDir, ['test'], 'jpg', 1, 1, log);
 
     expect(paths[0]).toContain('test.jpg');
 
@@ -136,7 +148,7 @@ describe('downloadImage', () => {
       ),
     );
 
-    await downloadImage('https://example.com/image.png', tempPath, 0);
+    await downloadImage('https://example.com/image.png', tempPath, 0, log);
 
     expect(fs.existsSync(tempPath)).toBe(true);
 
@@ -157,7 +169,7 @@ describe('downloadImage', () => {
       return Promise.resolve(new Response(new Uint8Array(imageBuffer), { status: 200 }));
     });
 
-    await downloadImage('https://example.com/image.png', tempPath, 1);
+    await downloadImage('https://example.com/image.png', tempPath, 1, log);
 
     expect(callCount).toBe(2);
     expect(fs.existsSync(tempPath)).toBe(true);
@@ -233,6 +245,7 @@ describe('generateImages (integration)', () => {
         maxRetries: 0,
         pollIntervalMs: 10,
         maxPollAttempts: 5,
+        verbose: false,
       },
       ['Cat', 'Dog', 'Bird', 'Fish'],
     );
@@ -306,6 +319,7 @@ describe('generateImages (integration)', () => {
         columns: 2,
         pollIntervalMs: 10,
         maxPollAttempts: 3,
+        verbose: false,
       },
       cells,
     );
@@ -343,6 +357,7 @@ describe('generateImages (integration)', () => {
         rows: 2,
         columns: 2,
         existing: 'skip',
+        verbose: false,
       },
       ['A', 'B', 'C', 'D'],
     );
@@ -399,6 +414,7 @@ describe('generateImages (integration)', () => {
         columns: 2,
         pollIntervalMs: 10,
         maxPollAttempts: 2,
+        verbose: false,
       },
       ['A', 'B'],
     );
@@ -416,7 +432,7 @@ describe('ensureDirectoryExists', () => {
     const testDir = path.join('/tmp', `test-dir-${Date.now()}`);
 
     expect(fs.existsSync(testDir)).toBe(false);
-    await ensureDirectoryExists(testDir);
+    await ensureDirectoryExists(testDir, log);
     expect(fs.existsSync(testDir)).toBe(true);
 
     // Cleanup
@@ -427,7 +443,7 @@ describe('ensureDirectoryExists', () => {
     const testDir = path.join('/tmp', `test-existing-${Date.now()}`);
     await fsPromises.mkdir(testDir, { recursive: true });
 
-    expect(ensureDirectoryExists(testDir)).resolves.toBeUndefined();
+    expect(ensureDirectoryExists(testDir, log)).resolves.toBeUndefined();
 
     // Cleanup
     await fsPromises.rm(testDir, { recursive: true, force: true });
@@ -436,7 +452,7 @@ describe('ensureDirectoryExists', () => {
   test('creates nested directories', async () => {
     const testDir = path.join('/tmp', `test-nested-${Date.now()}`, 'a', 'b', 'c');
 
-    await ensureDirectoryExists(testDir);
+    await ensureDirectoryExists(testDir, log);
     expect(fs.existsSync(testDir)).toBe(true);
 
     // Cleanup

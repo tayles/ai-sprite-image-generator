@@ -125,6 +125,7 @@ interface ImageGenerationOptions {
   maxPollAttempts: number; // Max poll attempts (default: 60)
   maxRetries: number; // Max retries for failures (default: 3)
   model: string; // AI model to use (default: 'nano-banana-pro')
+  verbose: boolean; // Enable console logging (default: true)
 }
 
 interface ImageGenerationResult {

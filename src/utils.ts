@@ -6,3 +6,40 @@ export function kebabCase(str: string): string {
     .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
     .toLowerCase();
 }
+
+/**
+ * A simple logger that can be enabled/disabled via the verbose flag.
+ * When disabled, all logging is suppressed.
+ */
+export class Logger {
+  constructor(private readonly enabled: boolean = true) {}
+
+  log(...args: unknown[]): void {
+    if (this.enabled) console.log(...args);
+  }
+
+  warn(...args: unknown[]): void {
+    if (this.enabled) console.warn(...args);
+  }
+
+  error(...args: unknown[]): void {
+    if (this.enabled) console.error(...args);
+  }
+
+  /**
+   * Logs a fetch request with method and URL.
+   */
+  fetch(method: string, url: string): void {
+    if (this.enabled) console.log(`[Fetch] ${method} ${url}`);
+  }
+}
+
+/** Shared global logger instance, defaults to verbose logging */
+export let logger = new Logger(true);
+
+/**
+ * Creates a new logger with the specified verbosity.
+ */
+export function createLogger(verbose: boolean = true): Logger {
+  return new Logger(verbose);
+}
