@@ -10,7 +10,6 @@ import {
   type OutputFormat,
 } from './kie-ai-client';
 import { RateLimiter, executeWithRateLimit } from './rate-limiter';
-import { kebabCase } from './utils';
 import {
   type CellDefinition,
   type ImageGenerationOptions,
@@ -19,6 +18,7 @@ import {
   DEFAULT_OPTIONS,
   type BatchResult,
 } from './types';
+import { kebabCase } from './utils';
 
 /**
  * Generates sprite sheet images from a prompt with optional cell definitions.

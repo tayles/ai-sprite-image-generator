@@ -1,9 +1,12 @@
 export { generateImages, splitSpriteSheet } from './lib';
 
-export {
-  type ImageGenerationOptions,
-  type CellDefinitions,
-  type CellDefinition,
-  type ImageGenerationResult,
-  DEFAULT_OPTIONS,
+export type {
+  ImageGenerationOptions,
+  CellDefinitions,
+  CellDefinition,
+  ImageGenerationResult,
 } from './types';
+
+export { DEFAULT_OPTIONS } from './types';
+
+export { KieApiError, TaskTimeoutError, TaskFailedError } from './kie-ai-client';
