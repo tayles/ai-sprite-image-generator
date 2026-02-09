@@ -8,6 +8,13 @@ This is a quick and cheap way to create lots of medium-resolution images quickly
 At time of writing, a 4k 4096x4096px image costs **$0.12** (24 API credits - [source](https://kie.ai/pricing)).
 By generating a 5x5 sprite sheet we can generate 25 820x820px images for **$0.0048** each.
 
+## Use Cases
+
+- Logo designs
+- Thumbnails
+- Game assets
+- Placeholder images for development
+
 ## Installation
 
 ```bash
@@ -20,7 +27,7 @@ bun add ai-sprite-image-generator
 import { generateImages } from 'ai-sprite-image-generator';
 
 const kieApiToken = 'your-kie-api-token';
-const prommpt = 'photos of cats';
+const prommpt = 'Generate a 5x5 sprite image of photos of cats';
 
-generateImages(kieApiToken, prommpt);
+await generateImages(kieApiToken, prommpt);
 ```
