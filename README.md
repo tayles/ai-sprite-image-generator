@@ -19,9 +19,9 @@ Possibly the quickest, easiest and most cost-effective way to generate large bat
 |                                                    |                                                             |
 | -------------------------------------------------- | ----------------------------------------------------------- |
 | **Cats**                                           | **Product Photos**                                          |
-| ![Cats](docs/examples/cats-image-sprite.png)       | ![Product Photos](docs/examples/furniture-image-sprite.png) |
+| ![Cats](docs/examples/cats-image-sprite.jpg)       | ![Product Photos](docs/examples/furniture-image-sprite.jpg) |
 | **Avatars**                                        | **Logos**                                                   |
-| ![Avatars](docs/examples/avatars-image-sprite.png) | ![Logos](docs/examples/logos-image-sprite.png)              |
+| ![Avatars](docs/examples/avatars-image-sprite.jpg) | ![Logos](docs/examples/logos-image-sprite.jpg)              |
 
 ## Features
 
