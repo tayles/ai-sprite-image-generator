@@ -3,6 +3,10 @@
 Use Google Nano Banana Pro via [kie.ai](https://kie.ai) to generate sprite images.
 This is a quick and cheap way to create lots of medium-resolution images quickly.
 
+![AI Sprite Image Generator](docs/ai-sprite-image-generator.svg)
+
+![AI Sprite Image Generator](docs/ai-sprite-image-generator2.svg)
+
 ## Pricing
 
 At time of writing, a 4k 4096x4096px image costs **$0.12** (24 API credits - [source](https://kie.ai/pricing)).
