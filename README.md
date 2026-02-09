@@ -8,6 +8,8 @@ Possibly the quickest, easiest and most cost-effective way to generate large bat
 
 ## Use Cases
 
+Suitable for any scenario where density and/or image consistency is preferable to raw image quality, such as:
+
 - Logo designs
 - Thumbnails
 - Game assets
@@ -29,10 +31,11 @@ See [integration.test.ts](test/integration.test.ts) for example prompts and usag
 
 ## Features
 
-- 🚀 **Fast parallel batch processing** - Process multiple batches concurrently to generate 100s of images in seconds
+- 🚀 **Fast parallel batch processing** - Process batches concurrently to generate 100s of images in seconds
 - ✂️ **Image splitting** - Automatically crops sprite sheets into individual images
-- ⏱️ **Rate limiting** - Respects KIE API limits (20 requests per 10 seconds)
+- ⏱️ **Rate limiting** - Respects KIE AI API limits (20 requests per 10 seconds)
 - 🎨 **Optimized prompts** - Automatically enhances your prompts for consistent sprite sheet generation
+- 🖼️ **Output consistency** - Consistent art style between images
 - 💰 **Cost effective** - Generate 25 images for the price of a single image on other platforms
 
 ## Pricing Comparison
@@ -42,7 +45,7 @@ At time of writing:
 - A single 1k image on [fal.ai](https://fal.ai/models/fal-ai/nano-banana-pro) costs **$0.15**
 - A 4k 4096x4096px image on [kie.ai](https://kie.ai/pricing) costs **$0.12**
 
-By generating a 5x5 sprite sheet using kie.ai we can generate 25 820x820px images for **$0.0048** each.
+By generating a 5x5 sprite sheet using KIE AI we can generate 25 820x820px images for **$0.0048** each.
 
 > [!TIP]
 > That's **30x** cheaper!
