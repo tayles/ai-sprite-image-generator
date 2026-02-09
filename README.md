@@ -20,18 +20,16 @@ Possibly the quickest, easiest and most cost-effective way to generate large bat
 | -------------------------------------------------- | ----------------------------------------------------------- |
 | **Cats**                                           | **Product Photos**                                          |
 | ![Cats](docs/examples/cats-image-sprite.jpg)       | ![Product Photos](docs/examples/furniture-image-sprite.jpg) |
-| **Avatars**                                        | **Logos**                                                   |
+| **Avatars**                                        | **Logo / Icon Design**                                      |
 | ![Avatars](docs/examples/avatars-image-sprite.jpg) | ![Logos](docs/examples/logos-image-sprite.jpg)              |
 
 ## Features
 
-- 🚀 **Parallel batch processing** - Process multiple batches concurrently while respecting API rate limits
-- 🔄 **Automatic retries** - Built-in retry logic with exponential backoff for failed requests
-- ✂️ **Image splitting** - Automatically crops sprite sheets into individual images using sharp
-- 📁 **Directory management** - Creates output directories automatically
+- 🚀 **Fast parallel batch processing** - Process multiple batches concurrently to generate 100s of images in seconds
+- ✂️ **Image splitting** - Automatically crops sprite sheets into individual images
 - ⏱️ **Rate limiting** - Respects KIE API limits (20 requests per 10 seconds)
 - 🎨 **Optimized prompts** - Automatically enhances your prompts for consistent sprite sheet generation
-- 📝 **Comprehensive logging** - Detailed logs for debugging and monitoring
+- 💰 **Cost effective** - Generate 25 images for the price of a single image on other platforms
 
 ## Pricing Comparison
 
@@ -43,7 +41,7 @@ At time of writing:
 By generating a 5x5 sprite sheet using kie.ai we can generate 25 820x820px images for **$0.0048** each.
 
 > [!TIP]
-> That's 30x cheaper!
+> That's **30x** cheaper!
 
 ## Installation
 
@@ -59,6 +57,7 @@ bun add ai-sprite-image-generator
 import { generateImages } from 'ai-sprite-image-generator';
 
 const kieApiToken = 'your-kie-api-token';
+
 const prompt = 'Photos of cats';
 
 const result = await generateImages(kieApiToken, prompt);
@@ -76,6 +75,7 @@ To specify specific items for each cell, pass an array of strings. Requests will
 import { generateImages } from 'ai-sprite-image-generator';
 
 const kieApiToken = 'your-kie-api-token';
+
 const prompt = 'Furniture product photos';
 
 const cells = ['Chair', 'Dinner Table', 'Sofa', 'Lamp', 'Bookshelf', 'Desk'];
