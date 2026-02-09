@@ -79,7 +79,7 @@ export async function executeWithRateLimit<T>(
       const taskIndex = index++;
       const promise = runTask(taskIndex).then(() => {
         const idx = executing.indexOf(promise);
-        if (idx !== -1) executing.splice(idx, 1);
+        if (idx !== -1) void executing.splice(idx, 1);
       });
       executing.push(promise);
     }

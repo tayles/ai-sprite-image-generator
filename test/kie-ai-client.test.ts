@@ -83,6 +83,7 @@ describe('KIE API Client', () => {
         ),
       );
 
+      // oxlint-disable-next-line typescript-eslint/await-thenable
       await expect(
         createTask(
           {
@@ -191,6 +192,7 @@ describe('KIE API Client', () => {
         ),
       );
 
+      // oxlint-disable-next-line typescript-eslint/await-thenable
       await expect(pollTaskStatus('task-123', 'test-token', 5, 10)).rejects.toThrow(
         TaskFailedError,
       );
@@ -212,6 +214,7 @@ describe('KIE API Client', () => {
         ),
       );
 
+      // oxlint-disable-next-line typescript-eslint/await-thenable
       await expect(pollTaskStatus('task-123', 'test-token', 2, 10)).rejects.toThrow(
         TaskTimeoutError,
       );

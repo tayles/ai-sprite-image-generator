@@ -27,6 +27,13 @@ function restoreFetch(): void {
   globalThis.fetch = originalFetch;
 }
 
+// Helper to extract URL string from fetch input
+function getUrlFromInput(input: RequestInfo | URL): string {
+  if (typeof input === 'string') return input;
+  if (input instanceof URL) return input.href;
+  return input.url; // Request object
+}
+
 // Helper to create a simple test image buffer
 async function createTestSpriteBuffer(width = 500, height = 500): Promise<Buffer> {
   return await sharp({
@@ -174,10 +181,10 @@ describe('generateImages (integration)', () => {
     const tempDir = path.join('/tmp', `test-generate-${Date.now()}`);
 
     setMockFetch(async (input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input.toString();
+      const url = getUrlFromInput(input);
 
       // Create task endpoint
-      if (url.includes('/v1/tasks')) {
+      if (url.includes('/v1/jobs/createTask')) {
         return new Response(
           JSON.stringify({
             code: 0,
@@ -250,9 +257,9 @@ describe('generateImages (integration)', () => {
     let taskIdCounter = 0;
 
     setMockFetch(async (input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input.toString();
+      const url = getUrlFromInput(input);
 
-      if (url.includes('/v1/tasks')) {
+      if (url.includes('/v1/jobs/createTask')) {
         taskIdCounter++;
         return new Response(
           JSON.stringify({
@@ -321,8 +328,8 @@ describe('generateImages (integration)', () => {
     await fsPromises.writeFile(path.join(tempDir, 'batches', 'batch-1.png'), spriteBuffer);
 
     setMockFetch(async (input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input.toString();
-      if (url.includes('/v1/tasks')) {
+      const url = getUrlFromInput(input);
+      if (url.includes('/v1/jobs/createTask')) {
         apiCallCount++;
       }
       return new Response('Not found', { status: 404 });
@@ -352,9 +359,9 @@ describe('generateImages (integration)', () => {
     const tempDir = path.join('/tmp', `test-errors-${Date.now()}`);
 
     setMockFetch(async (input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input.toString();
+      const url = getUrlFromInput(input);
 
-      if (url.includes('/v1/tasks')) {
+      if (url.includes('/v1/jobs/createTask')) {
         return new Response(
           JSON.stringify({
             code: 0,
