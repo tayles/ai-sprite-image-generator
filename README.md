@@ -9,7 +9,8 @@ Possibly the quickest, easiest and most cost-effective way to generate large bat
 ✨ Try it now with this one-liner:
 
 ```shell
-KIE_API_KEY=your-kie-api-key bunx ai-sprite-image-generator "Cat photos"
+KIE_API_KEY=your-kie-api-key \
+  bunx ai-sprite-image-generator "Cat photos"
 ```
 
 ## Use Cases
