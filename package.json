@@ -32,6 +32,7 @@
     "release": "bumpp --commit --push --tag",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
+    "test:ci": "bun test --coverage --coverage-reporter=lcov",
     "test:watch": "bun test --watch",
     "test:examples": "bun test --timeout 300000 test/integration.test.ts",
     "lint": "oxlint --type-aware --type-check",
