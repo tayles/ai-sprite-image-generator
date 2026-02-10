@@ -53,6 +53,8 @@ By generating a 5x5 sprite sheet using KIE AI we can generate 25 820x820px image
 ## Installation
 
 ```shell
+npm install ai-sprite-image-generator
+# or
 bun add ai-sprite-image-generator
 ```
 
