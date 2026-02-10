@@ -6,10 +6,10 @@ Possibly the quickest, easiest and most cost-effective way to generate large bat
 
 ![AI Sprite Image Generator](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/ai-sprite-image-generator.svg)
 
-Try it now with this one-liner:
+✨ Try it now with this one-liner:
 
 ```shell
-KIE_API_KEY=your-kie-api-key bunx ai-sprite-image-generator "Photos of cats"
+KIE_API_KEY=your-kie-api-key bunx ai-sprite-image-generator "Cat photos"
 ```
 
 ## Use Cases
@@ -33,7 +33,7 @@ Suitable for any scenario where density and/or image consistency is preferable t
 | **Game Assets**                                                                                                                    | **Logo / Icon Design**                                                                                                              |
 | ![Game Assets](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/game-assets-image-sprite.jpg) | ![Logos](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/logos-image-sprite.jpg)              |
 
-See [integration.test.ts](test/integration.test.ts) for example prompts and usage.
+See [integration-test.ts](test/integration-test.ts) for example prompts and usage.
 
 ## Features
 
