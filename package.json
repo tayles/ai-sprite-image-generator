@@ -1,7 +1,7 @@
 {
   "name": "ai-sprite-image-generator",
   "version": "1.0.4",
-  "description": "Use Google Nano Banana Pro via kie.ai to generate sprite images",
+  "description": "A TypeScript library and CLI tool to generate high-quality sprite images using Nano Banana Pro via kie.ai",
   "keywords": [
     "ai",
     "assets",

@@ -1,6 +1,6 @@
 # AI Sprite Image Generator
 
-Generate high-quality sprite images using Nano Banana Pro via [kie.ai](https://kie.ai).
+A TypeScript library and CLI tool to generate high-quality sprite images using Nano Banana Pro via [kie.ai](https://kie.ai).
 
 Possibly the quickest, easiest and most cost-effective way to generate large batches of consistent images for logos, thumbnails, game assets, product photos, and more.
 
@@ -261,3 +261,7 @@ Build package:
 ```shell
 bun run build
 ```
+
+## Maintainers
+
+- [David Taylor](https://github.com/tayles)
