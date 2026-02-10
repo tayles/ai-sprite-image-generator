@@ -24,14 +24,14 @@ import { kebabCase, createLogger, type Logger } from './utils';
  * Generates sprite sheet images from a prompt with optional cell definitions.
  * Supports parallel batch processing with rate limiting.
  *
- * @param apiToken - KIE API token
+ * @param apiKey - KIE API token
  * @param prompt - User prompt describing the desired image style
  * @param cells - Optional array of cell names or definitions
  * @param options - Generation options
  * @returns ImageGenerationResult with paths to generated images
  */
 export async function generateImages(
-  apiToken: string,
+  apiKey: string,
   prompt: string,
   options: Partial<ImageGenerationOptions> = {},
   cells?: CellDefinitions,
@@ -87,7 +87,7 @@ export async function generateImages(
   // Create batch processing tasks
   const batchTasks = batches.map((batchCells, batchIndex) => async () => {
     try {
-      return await processBatch(batchIndex, batchCells, apiToken, prompt, opts, rateLimiter, log);
+      return await processBatch(batchIndex, batchCells, apiKey, prompt, opts, rateLimiter, log);
     } catch (error) {
       log.error(`[Batch ${batchIndex + 1}] ❌ Failed: ${(error as Error).message}`);
       return {
@@ -313,7 +313,7 @@ export async function splitSpriteSheet(
 async function processBatch(
   batchIndex: number,
   batchCells: CellDefinition[],
-  apiToken: string,
+  apiKey: string,
   userPrompt: string,
   opts: ImageGenerationOptions,
   rateLimiter: RateLimiter,
@@ -383,7 +383,7 @@ async function processBatch(
     },
   };
 
-  const taskResponse = await createTask(payload, apiToken, opts.maxRetries, log);
+  const taskResponse = await createTask(payload, apiKey, opts.maxRetries, log);
   const taskId = taskResponse.data.taskId;
 
   log.log(`[Batch ${batchIndex + 1}] Task created: ${taskId}`);
@@ -391,7 +391,7 @@ async function processBatch(
   // Poll for completion
   const result = await pollTaskStatus(
     taskId,
-    apiToken,
+    apiKey,
     opts.maxPollAttempts,
     opts.pollIntervalMs,
     log,

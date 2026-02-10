@@ -287,7 +287,7 @@ describe('showHelp', () => {
     expect(output).toContain('USAGE');
     expect(output).toContain('OPTIONS');
     expect(output).toContain('EXAMPLES');
-    expect(output).toContain('KIE_API_TOKEN');
+    expect(output).toContain('KIE_API_KEY');
 
     console.log = originalLog;
   });

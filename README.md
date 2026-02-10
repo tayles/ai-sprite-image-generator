@@ -69,7 +69,7 @@ The package includes a CLI for quick image generation from the command line.
 Set your KIE AI API token as an environment variable:
 
 ```shell
-export KIE_API_TOKEN="your-kie-api-token"
+export KIE_API_KEY="your-kie-api-key"
 ```
 
 #### Basic Commands
@@ -139,11 +139,11 @@ ai-sprite-image-generator "Thumbnails" -q
 ```typescript
 import { generateImages } from 'ai-sprite-image-generator';
 
-const kieApiToken = 'your-kie-api-token';
+const kieApiKey = 'your-kie-api-key';
 
 const prompt = 'Photos of cats';
 
-const result = await generateImages(kieApiToken, prompt);
+const result = await generateImages(kieApiKey, prompt);
 
 console.log('Generated images:', result.imagePaths);
 
@@ -157,14 +157,14 @@ To specify specific items for each cell, pass an array of strings. Requests will
 ```typescript
 import { generateImages } from 'ai-sprite-image-generator';
 
-const kieApiToken = 'your-kie-api-token';
+const kieApiKey = 'your-kie-api-key';
 
 const prompt = 'Furniture product photos';
 
 const cells = ['Chair', 'Dinner Table', 'Sofa', 'Lamp', 'Bookshelf', 'Desk'];
 
 const result = await generateImages(
-  kieApiToken,
+  kieApiKey,
   prompt,
   {
     outputPath: './furniture',
@@ -178,7 +178,7 @@ console.log('Generated images:', result.imagePaths);
 
 #### API Reference
 
-##### `generateImages(apiToken, prompt, options?, cells?)`
+##### `generateImages(apiKey, prompt, options?, cells?)`
 
 Main function to generate sprite images.
 
@@ -186,7 +186,7 @@ See [lib.ts](src/lib.ts) for full implementation.
 
 **Parameters:**
 
-- `apiToken` (string) - Your KIE AI API token - [Get one here](https://docs.kie.ai)
+- `apiKey` (string) - Your KIE AI API token - [Get one here](https://docs.kie.ai)
 - `prompt` (string) - Base prompt describing the desired image style
 - `options` (ImageGenerationOptions) - Optional configuration
 - `cells` (string[] | CellDefinition[]) - Optional array of cell names or definitions

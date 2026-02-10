@@ -58,7 +58,7 @@ OPTIONS:
   -v, --version            Show version number
 
 ENVIRONMENT:
-  KIE_API_TOKEN            KIE AI API token (required)
+  KIE_API_KEY              KIE AI API token (required)
 
 EXAMPLES:
   # Generate 25 random cat images
@@ -264,9 +264,9 @@ export async function runCLI(argv: string[]): Promise<void> {
   }
 
   // Get API token from environment
-  const apiToken = process.env.KIE_API_TOKEN;
-  if (!apiToken) {
-    console.error('Error: KIE_API_TOKEN environment variable is required');
+  const apiKey = process.env.KIE_API_KEY;
+  if (!apiKey) {
+    console.error('Error: KIE_API_KEY environment variable is required');
     process.exit(1);
   }
 
@@ -294,7 +294,7 @@ export async function runCLI(argv: string[]): Promise<void> {
     }
   }
 
-  const result = await generateImages(apiToken, args.prompt, options, cells);
+  const result = await generateImages(apiKey, args.prompt, options, cells);
 
   // Output results
   if (!args.quiet) {

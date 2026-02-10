@@ -121,7 +121,7 @@ function getBackoffDelay(
  */
 export async function createTask(
   payload: KieAiCreateTaskRequestBody,
-  apiToken: string,
+  apiKey: string,
   maxRetries: number = 3,
   log: Logger = createLogger(),
 ): Promise<KieAiCreateTaskResponse> {
@@ -137,7 +137,7 @@ export async function createTask(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiToken}`,
+          Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify(payload),
       });
@@ -213,7 +213,7 @@ export async function createTask(
  */
 export async function pollTaskStatus(
   taskId: string,
-  apiToken: string,
+  apiKey: string,
   maxAttempts: number = 60,
   interval: number = 5_000,
   log: Logger = createLogger(),
@@ -227,7 +227,7 @@ export async function pollTaskStatus(
       log.fetch('GET', url);
       const response = await fetch(url, {
         headers: {
-          Authorization: `Bearer ${apiToken}`,
+          Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
       });
@@ -316,7 +316,7 @@ export const DEFAULT_IMAGE_OPTIONS: KieAiApiImageGenerationOptions = {
 
 export async function generateImage(
   prompt: string,
-  apiToken: string,
+  apiKey: string,
   options: KieAiApiImageGenerationOptions,
 ): Promise<string> {
   const opts = { ...DEFAULT_IMAGE_OPTIONS, ...options };
@@ -334,13 +334,13 @@ export async function generateImage(
     },
   };
 
-  const taskResponse = await createTask(payload, apiToken, 3, log);
+  const taskResponse = await createTask(payload, apiKey, 3, log);
   const taskId = taskResponse.data.taskId;
   log.log(`Task created with ID: ${taskId}`);
 
   const result = await pollTaskStatus(
     taskId,
-    apiToken,
+    apiKey,
     undefined,
     opts.checkFrequencySecs! * 1000,
     log,
