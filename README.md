@@ -218,6 +218,28 @@ interface ImageGenerationResult {
 }
 ```
 
-## License
+## Contributing
 
-MIT
+Install dependencies:
+
+```shell
+bun install
+```
+
+Run lint/format/typecheck (and auto-fix where possible):
+
+```shell
+bun clean
+```
+
+Run tests:
+
+```shell
+bun test
+```
+
+Build package:
+
+```shell
+bun run build
+```
