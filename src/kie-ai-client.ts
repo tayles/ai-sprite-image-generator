@@ -1,21 +1,25 @@
 import { createLogger, type Logger } from './utils';
 
-export type AspectRatio =
-  | '1:1'
-  | '2:3'
-  | '3:2'
-  | '3:4'
-  | '4:3'
-  | '4:5'
-  | '5:4'
-  | '9:16'
-  | '16:9'
-  | '21:9'
-  | 'auto';
+export const ASPECT_RATIOS = [
+  '1:1',
+  '2:3',
+  '3:2',
+  '3:4',
+  '4:3',
+  '4:5',
+  '5:4',
+  '9:16',
+  '16:9',
+  '21:9',
+  'auto',
+] as const;
 
-export type Resolution = '1K' | '2K' | '4K';
+export const RESOLUTIONS = ['1K', '2K', '4K'] as const;
+export const OUTPUT_FORMATS = ['png', 'jpg'] as const;
 
-export type OutputFormat = 'png' | 'jpg';
+export type AspectRatio = (typeof ASPECT_RATIOS)[number];
+export type Resolution = (typeof RESOLUTIONS)[number];
+export type OutputFormat = (typeof OUTPUT_FORMATS)[number];
 
 export interface KieAiCreateTaskRequestBody {
   model: string;

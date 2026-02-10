@@ -52,13 +52,87 @@ By generating a 5x5 sprite sheet using KIE AI we can generate 25 820x820px image
 
 ## Installation
 
-```bash
+```shell
 bun add ai-sprite-image-generator
 ```
 
 ## Usage
 
-### Basic Usage
+### CLI Usage
+
+The package includes a CLI for quick image generation from the command line.
+
+#### Setup
+
+Set your KIE AI API token as an environment variable:
+
+```shell
+export KIE_API_TOKEN="your-kie-api-token"
+```
+
+#### Basic Commands
+
+```shell
+# Generate 25 random images (5x5 grid)
+ai-sprite-image-generator "Photos of cats"
+
+# Generate specific named items
+ai-sprite-image-generator "Furniture product photos" --cells "Chair,Table,Sofa,Lamp"
+```
+
+#### Reading Cells from Stdin
+
+You can pipe cell names from a file or command (newline or comma-separated):
+
+```shell
+# From a file (one item per line)
+cat items.txt | ai-sprite-image-generator "Product photos"
+
+# From echo (comma-separated)
+echo "Cat,Dog,Bird,Fish" | ai-sprite-image-generator "Animal avatars"
+```
+
+#### CLI Options
+
+```shell
+USAGE:
+  ai-sprite-image-generator <prompt> [options]
+
+OPTIONS:
+  -c, --cells <items>      Comma or newline-separated list of cell names
+  -o, --output <path>      Output directory (default: ./out)
+  -x, --columns <n>        Grid columns (default: 5)
+  -y, --rows <n>           Grid rows (default: 5)
+  -a, --aspect-ratio <r>   Aspect ratio: 1:1, 2:3, 3:2, 4:3, 16:9, etc. (default: 1:1)
+  -r, --resolution <r>     Resolution: 1K, 2K, 4K (default: 4K)
+  -f, --format <fmt>       Output format: png, jpg (default: png)
+  -m, --model <name>       AI model name (default: nano-banana-pro)
+  --concurrency <n>        Max concurrent batches (default: 10)
+  --existing <mode>        Handle existing files: overwrite, skip (default: overwrite)
+  -q, --quiet              Suppress verbose output
+  -h, --help               Show help message
+  -v, --version            Show version number
+```
+
+#### CLI Examples
+
+```shell
+# Generate with custom grid size (3x3 = 9 images per batch)
+ai-sprite-image-generator "Animal avatars" -x 3 -y 3
+
+# Output to specific directory in JPG format
+ai-sprite-image-generator "Logo designs" -o ./logos --format jpg
+
+# Skip existing files instead of overwriting
+ai-sprite-image-generator "Game assets" --existing skip
+
+# Quiet mode (minimal output)
+ai-sprite-image-generator "Thumbnails" -q
+```
+
+### TypeScript Library
+
+#### Basic Usage
 
 ```typescript
 import { generateImages } from 'ai-sprite-image-generator';
@@ -74,7 +148,7 @@ console.log('Generated images:', result.imagePaths);
 // Generated images: ['out/images/image-1.png', 'out/images/image-2.png', ...]
 ```
 
-### With Named Items
+#### With Named Items
 
 To specify specific items for each cell, pass an array of strings. Requests will be batched based on the grid size (e.g. 5x5 = 25 items per batch):
 
@@ -100,9 +174,9 @@ console.log('Generated images:', result.imagePaths);
 // Generated images: ['./furniture/images/chair.png', './furniture/images/dinner-table.png', ...]
 ```
 
-## API Reference
+#### API Reference
 
-### `generateImages(apiToken, prompt, options?, cells?)`
+##### `generateImages(apiToken, prompt, options?, cells?)`
 
 Main function to generate sprite images.
 
@@ -117,7 +191,7 @@ See [lib.ts](src/lib.ts) for full implementation.
 
 **Returns:** `Promise<ImageGenerationResult>`
 
-### Types
+##### Types
 
 ```typescript
 interface ImageGenerationOptions {

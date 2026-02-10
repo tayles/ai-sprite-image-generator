@@ -11,6 +11,9 @@
     "type": "git",
     "url": "git+https://github.com/tayles/ai-sprite-image-generator.git"
   },
+  "bin": {
+    "ai-sprite-image-generator": "./dist/cli.js"
+  },
   "files": [
     "dist"
   ],
