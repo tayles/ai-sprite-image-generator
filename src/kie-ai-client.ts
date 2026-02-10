@@ -218,6 +218,9 @@ export async function pollTaskStatus(
   const maxConsecutiveErrors = 5;
   const url = `https://api.kie.ai/api/v1/jobs/recordInfo?taskId=${taskId}`;
 
+  // Wait before starting to poll - task needs time to be queued
+  await delay(interval);
+
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       log.fetch('GET', url);
