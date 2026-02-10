@@ -3,34 +3,34 @@
   "version": "1.0.0",
   "description": "Use Google Nano Banana Pro via kie.ai to generate sprite images",
   "keywords": [
-    "sprite",
-    "image",
-    "generator",
     "ai",
-    "kie ai",
-    "nano banana pro",
-    "gemini",
-    "creator",
-    "logo",
-    "photo",
-    "thumbnail",
     "assets",
-    "gen-ai",
-    "sprite sheet",
+    "creator",
     "game development",
-    "web development",
-    "grid"
+    "gemini",
+    "gen-ai",
+    "generator",
+    "grid",
+    "image",
+    "kie ai",
+    "logo",
+    "nano banana pro",
+    "photo",
+    "sprite",
+    "sprite sheet",
+    "thumbnail",
+    "web development"
   ],
   "homepage": "https://github.com/tayles/ai-sprite-image-generator",
   "bugs": {
     "url": "https://github.com/tayles/ai-sprite-image-generator/issues"
   },
   "license": "MIT",
+  "author": "tayles",
   "repository": {
     "type": "git",
     "url": "https://github.com/tayles/ai-sprite-image-generator.git"
   },
-  "author": "tayles",
   "bin": {
     "ai-sprite-image-generator": "./dist/cli.js"
   },
