@@ -54,7 +54,13 @@ By generating a 5x5 sprite sheet using KIE AI we can generate 25 820x820px image
 
 ```shell
 npm install ai-sprite-image-generator
-# or
+```
+
+```shell
+pnpm add ai-sprite-image-generator
+```
+
+```shell
 bun add ai-sprite-image-generator
 ```
 
@@ -64,7 +70,11 @@ bun add ai-sprite-image-generator
 
 The package includes a CLI for quick image generation from the command line.
 
-#### Setup
+#### Installation
+
+```shell
+npm install -g ai-sprite-image-generator
+```
 
 Set your KIE AI API token as an environment variable:
 
