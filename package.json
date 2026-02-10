@@ -1,6 +1,6 @@
 {
   "name": "ai-sprite-image-generator",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Use Google Nano Banana Pro via kie.ai to generate sprite images",
   "keywords": [
     "ai",
