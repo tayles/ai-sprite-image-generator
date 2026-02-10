@@ -4,7 +4,7 @@ Generate high-quality sprite images using Nano Banana Pro via [kie.ai](https://k
 
 Possibly the quickest, easiest and most cost-effective way to generate large batches of consistent images for logos, thumbnails, game assets, product photos, and more.
 
-![AI Sprite Image Generator](docs/ai-sprite-image-generator.svg)
+![AI Sprite Image Generator](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/ai-sprite-image-generator.svg)
 
 Try it now with this one-liner:
 
@@ -24,14 +24,14 @@ Suitable for any scenario where density and/or image consistency is preferable t
 
 ## Examples
 
-|                                                            |                                                             |
-| ---------------------------------------------------------- | ----------------------------------------------------------- |
-| **Cats**                                                   | **Product Photos**                                          |
-| ![Cats](docs/examples/cats-image-sprite.jpg)               | ![Product Photos](docs/examples/furniture-image-sprite.jpg) |
-| **Avatars**                                                | **Animals**                                                 |
-| ![Avatars](docs/examples/avatars-image-sprite.jpg)         | ![Animals](docs/examples/animals-image-sprite.jpg)          |
-| **Game Assets**                                            | **Logo / Icon Design**                                      |
-| ![Game Assets](docs/examples/game-assets-image-sprite.jpg) | ![Logos](docs/examples/logos-image-sprite.jpg)              |
+|                                                                                                                                    |                                                                                                                                     |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Cats**                                                                                                                           | **Product Photos**                                                                                                                  |
+| ![Cats](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/cats-image-sprite.jpg)               | ![Product Photos](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/furniture-image-sprite.jpg) |
+| **Avatars**                                                                                                                        | **Animals**                                                                                                                         |
+| ![Avatars](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/avatars-image-sprite.jpg)         | ![Animals](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/animals-image-sprite.jpg)          |
+| **Game Assets**                                                                                                                    | **Logo / Icon Design**                                                                                                              |
+| ![Game Assets](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/game-assets-image-sprite.jpg) | ![Logos](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/logos-image-sprite.jpg)              |
 
 See [integration.test.ts](test/integration.test.ts) for example prompts and usage.
 
