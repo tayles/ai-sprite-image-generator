@@ -156,7 +156,7 @@ export async function createTask(
       // Handle server errors with retry
       if (response.status >= 500) {
         const waitTime = getBackoffDelay(attempt);
-        log.warn(`Server error (${response.status}). Waiting ${waitTime}ms before retry...`);
+        log.error(`Server error (${response.status}). Waiting ${waitTime}ms before retry...`);
         await delay(waitTime);
         continue;
       }
@@ -265,7 +265,7 @@ export async function pollTaskStatus(
       }
 
       if (state === 'fail') {
-        log.error(`❌ Task ${taskId} failed: ${failMsg}`);
+        log.error(`Task ${taskId} failed: ${failMsg}`);
         throw new TaskFailedError(taskId, failCode, failMsg);
       }
 

@@ -12,11 +12,11 @@ export class Logger {
   }
 
   warn(...args: unknown[]): void {
-    if (this.enabled) console.warn(pc.yellow(args.map(a => String(a)).join(' ')));
+    if (this.enabled) console.warn(pc.yellow(`⚠️ ${args.map(a => String(a)).join(' ')}`));
   }
 
   error(...args: unknown[]): void {
-    if (this.enabled) console.error(pc.red(args.map(a => String(a)).join(' ')));
+    if (this.enabled) console.error(pc.red(`❌ ${args.map(a => String(a)).join(' ')}`));
   }
 
   /**

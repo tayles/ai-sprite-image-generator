@@ -100,9 +100,7 @@ export async function generateImages(
         totalBatches,
       );
     } catch (error) {
-      log.error(
-        `Batch ${batchIndex + 1} of ${totalBatches} ❌ Failed: ${(error as Error).message}`,
-      );
+      log.error(`Batch ${batchIndex + 1} of ${totalBatches} failed: ${(error as Error).message}`);
       return {
         batchIndex,
         batchImagePath: '',
@@ -151,7 +149,7 @@ export async function generateImages(
   log.log(`Results: ${successfulBatches}/${batches.length} batches, ${imagePaths.length} images`);
 
   if (errors.length > 0) {
-    log.warn(`⚠️ ${errors.length} batch(es) failed:`);
+    log.warn(`${errors.length} batch(es) failed:`);
     for (const { batchIndex, error } of errors) {
       log.warn(`  - Batch ${batchIndex + 1} of ${batches.length}: ${error.message}`);
     }
@@ -305,7 +303,7 @@ export async function splitSpriteSheet(
         outputPaths.push(cellOutputPath);
         log.success(`Saved cell ${cellIndex + 1}/${totalCells}: ${cellOutputPath}`);
       } catch (error) {
-        log.error(`❌ Failed to extract cell ${cellIndex + 1}: ${(error as Error).message}`);
+        log.error(`Failed to extract cell ${cellIndex + 1}: ${(error as Error).message}`);
         throw error;
       }
     }
