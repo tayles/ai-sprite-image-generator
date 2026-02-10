@@ -1,3 +1,5 @@
+import pc from 'picocolors';
+
 import type { ImageGenerationOptions } from './types';
 
 import packageJson from '../package.json';
@@ -257,7 +259,7 @@ export async function runCLI(argv: string[]): Promise<void> {
 
   // Validate required arguments
   if (!args.prompt) {
-    console.error('Error: prompt is required');
+    console.error(pc.red('Error: prompt is required'));
     console.error('');
     showHelp();
     process.exit(1);
@@ -266,7 +268,7 @@ export async function runCLI(argv: string[]): Promise<void> {
   // Get API token from environment
   const apiKey = process.env.KIE_API_KEY;
   if (!apiKey) {
-    console.error('Error: KIE_API_KEY environment variable is required');
+    console.error(pc.red('Error: KIE_API_KEY environment variable is required'));
     process.exit(1);
   }
 
@@ -288,9 +290,9 @@ export async function runCLI(argv: string[]): Promise<void> {
   const cells = args.cells.length > 0 ? args.cells : undefined;
 
   if (!args.quiet) {
-    console.log(`Generating images for prompt: "${args.prompt}"`);
+    console.log(pc.cyan(`Generating images for prompt: "${args.prompt}"`));
     if (cells) {
-      console.log(`Cells: ${cells.length} item(s)`);
+      console.log(pc.dim(`Cells: ${cells.length} item(s)`));
     }
   }
 
@@ -299,15 +301,17 @@ export async function runCLI(argv: string[]): Promise<void> {
   // Output results
   if (!args.quiet) {
     console.log('');
-    console.log(`✅ Generated ${result.imagePaths.length} images`);
-    console.log(`   Batches: ${result.successfulBatches}/${result.totalBatches}`);
-    console.log(`   Output: ${args.output}`);
+    console.log(pc.green(`✅ Generated ${result.imagePaths.length} images`));
+    console.log(pc.dim(`   Batches: ${result.successfulBatches}/${result.totalBatches}`));
+    console.log(pc.dim(`   Output: ${args.output}`));
 
     if (result.errors.length > 0) {
       console.log('');
-      console.warn(`⚠️ ${result.errors.length} error(s):`);
+      console.warn(pc.yellow(`⚠️ ${result.errors.length} error(s):`));
       for (const { batchIndex, error } of result.errors) {
-        console.warn(`   Batch ${batchIndex + 1}: ${error.message}`);
+        console.warn(
+          pc.yellow(`   Batch ${batchIndex + 1} of ${result.totalBatches}: ${error.message}`),
+        );
       }
     }
   }

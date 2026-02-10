@@ -1,6 +1,7 @@
 import { describe, expect, test, spyOn } from 'bun:test';
 
-import { kebabCase, createLogger, Logger } from '../src/utils';
+import { createLogger, Logger } from '../src/logger';
+import { kebabCase } from '../src/utils';
 
 describe('kebabCase', () => {
   test('converts simple string', () => {
@@ -95,7 +96,11 @@ describe('Logger', () => {
     const log = createLogger(true);
     log.fetch('POST', 'https://api.example.com/tasks');
 
-    expect(logSpy).toHaveBeenCalledWith('[Fetch] POST https://api.example.com/tasks');
+    expect(logSpy).toHaveBeenCalled();
+    // The output includes ANSI color codes, so we check the call contains the key parts
+    const callArg = logSpy.mock.calls[0]?.[0] as string;
+    expect(callArg).toContain('POST');
+    expect(callArg).toContain('https://api.example.com/tasks');
 
     logSpy.mockRestore();
   });

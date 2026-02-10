@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
+import { createLogger } from '../src/logger';
 import { RateLimiter, executeWithRateLimit } from '../src/rate-limiter';
-import { createLogger } from '../src/utils';
 
 // Silent logger for tests
 const log = createLogger(false);

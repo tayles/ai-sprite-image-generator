@@ -11,7 +11,7 @@ import {
   generateImages,
   splitSpriteSheet,
 } from '../src/lib';
-import { createLogger } from '../src/utils';
+import { createLogger } from '../src/logger';
 
 // Silent logger for tests
 const log = createLogger(false);

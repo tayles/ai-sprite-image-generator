@@ -7,7 +7,7 @@ import {
   TaskFailedError,
   TaskTimeoutError,
 } from '../src/kie-ai-client';
-import { createLogger } from '../src/utils';
+import { createLogger } from '../src/logger';
 
 // Silent logger for tests
 const log = createLogger(false);

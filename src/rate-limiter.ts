@@ -1,4 +1,4 @@
-import { createLogger, type Logger } from './utils';
+import { createLogger, type Logger } from './logger';
 
 /**
  * Rate limiter that enforces a maximum number of requests per time window.
@@ -30,9 +30,7 @@ export class RateLimiter {
       const oldestTimestamp = this.timestamps[0]!;
       const waitTime = this.windowMs - (now - oldestTimestamp) + 10; // +10ms buffer
 
-      this.log.log(
-        `[RateLimiter] Rate limit reached. Waiting ${waitTime}ms before next request...`,
-      );
+      this.log.log(`Rate limit reached. Waiting ${waitTime}ms before next request...`);
       await new Promise(resolve => setTimeout(resolve, waitTime));
 
       // Recursively try again after waiting

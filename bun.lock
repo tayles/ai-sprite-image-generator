@@ -6,6 +6,7 @@
       "name": "ai-sprite-image-generator",
       "dependencies": {
         "@types/sharp": "^0.32.0",
+        "picocolors": "^1.1.1",
         "sharp": "^0.34.5",
       },
       "devDependencies": {

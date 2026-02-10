@@ -1,4 +1,4 @@
-import { createLogger, type Logger } from './utils';
+import { createLogger, type Logger } from './logger';
 
 export const ASPECT_RATIOS = [
   '1:1',
@@ -130,7 +130,7 @@ export async function createTask(
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      log.log(`[KIE API] Creating task (attempt ${attempt + 1}/${maxRetries + 1})...`);
+      log.log(`Creating task (attempt ${attempt + 1}/${maxRetries + 1})...`);
       log.fetch('POST', url);
 
       const response = await fetch(url, {
@@ -148,7 +148,7 @@ export async function createTask(
         const waitTime = retryAfter
           ? Number.parseInt(retryAfter, 10) * 1000
           : getBackoffDelay(attempt);
-        log.warn(`[KIE API] Rate limited (429). Waiting ${waitTime}ms before retry...`);
+        log.warn(`Rate limited (429). Waiting ${waitTime}ms before retry...`);
         await delay(waitTime);
         continue;
       }
@@ -156,9 +156,7 @@ export async function createTask(
       // Handle server errors with retry
       if (response.status >= 500) {
         const waitTime = getBackoffDelay(attempt);
-        log.warn(
-          `[KIE API] Server error (${response.status}). Waiting ${waitTime}ms before retry...`,
-        );
+        log.warn(`Server error (${response.status}). Waiting ${waitTime}ms before retry...`);
         await delay(waitTime);
         continue;
       }
@@ -184,7 +182,7 @@ export async function createTask(
         );
       }
 
-      log.log(`[KIE API] Task created successfully: ${data.data.taskId}`);
+      log.success(`Task created successfully: ${data.data.taskId}`);
       return data;
     } catch (error) {
       lastError = error as Error;
@@ -196,9 +194,7 @@ export async function createTask(
 
       if (attempt < maxRetries) {
         const waitTime = getBackoffDelay(attempt);
-        log.warn(
-          `[KIE API] Request failed: ${(error as Error).message}. Retrying in ${waitTime}ms...`,
-        );
+        log.warn(`Request failed: ${(error as Error).message}. Retrying in ${waitTime}ms...`);
         await delay(waitTime);
       }
     }
@@ -236,7 +232,7 @@ export async function pollTaskStatus(
       if (response.status === 429) {
         const retryAfter = response.headers.get('Retry-After');
         const waitTime = retryAfter ? Number.parseInt(retryAfter, 10) * 1000 : interval * 2;
-        log.warn(`[KIE API] Rate limited during polling. Waiting ${waitTime}ms...`);
+        log.warn(`Rate limited during polling. Waiting ${waitTime}ms...`);
         await delay(waitTime);
         continue;
       }
@@ -249,7 +245,7 @@ export async function pollTaskStatus(
             response.status,
           );
         }
-        log.warn(`[KIE API] Poll request failed (${response.status}). Retrying...`);
+        log.warn(`Poll request failed (${response.status}). Retrying...`);
         await delay(interval);
         continue;
       }
@@ -260,16 +256,16 @@ export async function pollTaskStatus(
       const result = (await response.json()) as KieAiTaskStatusResponse;
       const { state, resultJson, failMsg, failCode } = result.data;
 
-      log.log(`[KIE API] Task ${taskId} - Attempt ${attempt + 1}: State = ${state}`);
+      log.log(`Task ${taskId} - Attempt ${attempt + 1}: State = ${state}`);
 
       if (state === 'success') {
         const results = JSON.parse(resultJson) as KieAiImageGenerationResult;
-        log.log(`[KIE API] ✅ Task ${taskId} completed! URLs: ${results.resultUrls.length}`);
+        log.success(`Task ${taskId} completed! URLs: ${results.resultUrls.length}`);
         return results;
       }
 
       if (state === 'fail') {
-        log.error(`[KIE API] ❌ Task ${taskId} failed: ${failMsg}`);
+        log.error(`❌ Task ${taskId} failed: ${failMsg}`);
         throw new TaskFailedError(taskId, failCode, failMsg);
       }
 
@@ -288,7 +284,7 @@ export async function pollTaskStatus(
         );
       }
 
-      log.warn(`[KIE API] Poll error: ${(error as Error).message}. Retrying...`);
+      log.warn(`Poll error: ${(error as Error).message}. Retrying...`);
       await delay(interval);
     }
   }
