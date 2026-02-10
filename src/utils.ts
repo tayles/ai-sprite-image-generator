@@ -34,9 +34,6 @@ export class Logger {
   }
 }
 
-/** Shared global logger instance, defaults to verbose logging */
-export let logger = new Logger(true);
-
 /**
  * Creates a new logger with the specified verbosity.
  */
