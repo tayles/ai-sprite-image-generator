@@ -1,16 +1,19 @@
 # AI Sprite Image Generator
 
+![AI Sprite Image Generator](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/ai-sprite-image-generator.svg)
+
 A TypeScript library and CLI tool to generate high-quality sprite images using Nano Banana Pro via [kie.ai](https://kie.ai).
+
+![AI Sprite Image Generator Workflow](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/ai-sprite-image-generator-workflow.png)
 
 Possibly the quickest, easiest and most cost-effective way to generate large batches of consistent images for logos, thumbnails, game assets, product photos, and more.
 
-![AI Sprite Image Generator](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/ai-sprite-image-generator.svg)
+
 
 ✨ Try it now with this one-liner:
 
 ```shell
-KIE_API_KEY=your-kie-api-key \
-  bunx ai-sprite-image-generator "Cat photos"
+KIE_API_KEY="your-kie-api-key" bunx ai-sprite-image-generator "Cat photos"
 ```
 
 ## Use Cases
@@ -98,6 +101,8 @@ ai-sprite-image-generator "Photos of cats"
 # Generate specific named items
 ai-sprite-image-generator "Furniture product photos" --cells "Chair,Table,Sofa,Lamp"
 ```
+
+By default, your generated photos will be in `./out/`.
 
 #### Reading Cells from Stdin
 
