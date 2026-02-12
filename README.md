@@ -18,9 +18,9 @@ KIE_API_KEY="your-kie-api-key" bunx ai-sprite-image-generator "Cat photos"
 
 ## Use Cases
 
-Suitable for any scenario where density and/or image consistency is preferable to raw image quality, such as:
+Suitable for any scenario where density, speed and/or image consistency is preferable to raw image quality, such as:
 
-- Logo designs
+- Logo or icon design ideas
 - Thumbnails
 - Game assets
 - Product photos
@@ -28,14 +28,14 @@ Suitable for any scenario where density and/or image consistency is preferable t
 
 ## Examples
 
-|                                                                                                                                    |                                                                                                                                     |
-| ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| **Cats**                                                                                                                           | **Product Photos**                                                                                                                  |
-| ![Cats](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/cats-image-sprite.jpg)               | ![Product Photos](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/furniture-image-sprite.jpg) |
-| **Avatars**                                                                                                                        | **Animals**                                                                                                                         |
-| ![Avatars](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/avatars-image-sprite.jpg)         | ![Animals](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/animals-image-sprite.jpg)          |
-| **Game Assets**                                                                                                                    | **Logo / Icon Design**                                                                                                              |
-| ![Game Assets](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/game-assets-image-sprite.jpg) | ![Logos](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/logos-image-sprite.jpg)              |
+|                                                                                                                                        |                                                                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Cats**                                                                                                                               | **Product Photos**                                                                                                                  |
+| ![Cats](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/cats-image-sprite.jpg)                   | ![Product Photos](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/furniture-image-sprite.jpg) |
+| **Avatars**                                                                                                                            | **Animals**                                                                                                                         |
+| ![Avatars](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/avatars-image-sprite.jpg)             | ![Animals](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/animals-image-sprite.jpg)          |
+| **Game Assets**                                                                                                                        | **Logo / Icon Design Ideas**                                                                                                        |
+| ![Famous People](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/famous-people-image-sprite.jpg) | ![Logos](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/examples/logos-image-sprite.jpg)              |
 
 See [integration-test.ts](test/integration-test.ts) for example prompts and usage.
 
