@@ -8,8 +8,6 @@ A TypeScript library and CLI tool to generate high-quality sprite images using N
 
 Possibly the quickest, easiest and most cost-effective way to generate large batches of consistent images for logos, thumbnails, game assets, product photos, and more.
 
-
-
 ✨ Try it now with this one-liner:
 
 ```shell
