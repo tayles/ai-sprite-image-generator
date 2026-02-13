@@ -72,12 +72,12 @@
     "sharp": "^0.34.5"
   },
   "devDependencies": {
-    "@types/bun": "^1.3.8",
+    "@types/bun": "^1.3.9",
     "bumpp": "^10.4.1",
-    "bunup": "^0.16.25",
-    "oxfmt": "^0.28.0",
-    "oxlint": "^1.43.0",
-    "oxlint-tsgolint": "^0.11.5",
+    "bunup": "^0.16.26",
+    "oxfmt": "^0.32.0",
+    "oxlint": "^1.47.0",
+    "oxlint-tsgolint": "^0.12.1",
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
