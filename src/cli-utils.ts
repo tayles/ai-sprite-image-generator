@@ -1,7 +1,5 @@
 import pc from 'picocolors';
 
-import type { ImageGenerationOptions } from './types';
-
 import packageJson from '../package.json';
 import {
   ASPECT_RATIOS,
@@ -12,6 +10,7 @@ import {
   type Resolution,
 } from './kie-ai-client';
 import { generateImages } from './lib';
+import type { ImageGenerationOptions } from './types';
 import { DEFAULT_OPTIONS } from './types';
 
 export interface CLIArgs {
