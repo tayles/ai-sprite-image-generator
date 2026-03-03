@@ -251,7 +251,7 @@ bun install
 Run lint/format/typecheck (and auto-fix where possible):
 
 ```shell
-bun clean
+bun fix
 ```
 
 Run tests:
