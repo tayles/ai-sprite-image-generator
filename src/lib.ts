@@ -298,7 +298,7 @@ export async function splitSpriteSheet(
             width: cellWidth,
             height: cellHeight,
           })
-          .toFormat(outputFormat)
+          .toFormat(outputFormat === 'jpg' ? 'jpeg' : outputFormat)
           .toFile(cellOutputPath);
 
         outputPaths.push(cellOutputPath);

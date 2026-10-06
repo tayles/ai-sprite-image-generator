@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { generateImages, ImageGenerationOptions } from '../src';
+import { generateImages, type ImageGenerationOptions } from '../src';
 
 describe.skip('manual integration tests', () => {
   const kieApiKey = process.env.KIE_API_KEY || '';
