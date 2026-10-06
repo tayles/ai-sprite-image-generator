@@ -1,5 +1,7 @@
 import { createLogger, type Logger } from './logger';
+import { DEFAULT_MODEL, resolveModelInput } from './models';
 
+/** All aspect ratios supported by at least one model. Use `ModelDefinition.aspectRatios` for a specific model. */
 export const ASPECT_RATIOS = [
   '1:1',
   '2:3',
@@ -11,6 +13,19 @@ export const ASPECT_RATIOS = [
   '9:16',
   '16:9',
   '21:9',
+  '9:21',
+  '1:2',
+  '2:1',
+  '1:3',
+  '3:1',
+  '1:4',
+  '4:1',
+  '1:8',
+  '8:1',
+  '8:9',
+  '9:8',
+  '16:27',
+  '27:16',
   'auto',
 ] as const;
 
@@ -24,13 +39,8 @@ export type OutputFormat = (typeof OUTPUT_FORMATS)[number];
 export interface KieAiCreateTaskRequestBody {
   model: string;
   callBackUrl: string;
-  input: {
-    prompt: string;
-    image_input: string[];
-    aspect_ratio: AspectRatio;
-    resolution: Resolution;
-    output_format: OutputFormat;
-  };
+  /** Model-specific input, see `ModelDefinition.buildInput` */
+  input: Record<string, unknown>;
 }
 
 export interface KieAiCreateTaskResponse {
@@ -117,7 +127,7 @@ function getBackoffDelay(
 
 /**
  * Creates a new image generation task with retry logic.
- * @see https://docs.kie.ai/market/google/nano-banana
+ * @see https://docs.kie.ai/market/quickstart
  */
 export async function createTask(
   payload: KieAiCreateTaskRequestBody,
@@ -309,7 +319,7 @@ export const DEFAULT_IMAGE_OPTIONS: KieAiApiImageGenerationOptions = {
   aspectRatio: '1:1',
   resolution: '4K',
   outputFormat: 'png',
-  model: 'nano-banana-pro',
+  model: DEFAULT_MODEL,
   verbose: true,
 };
 
@@ -321,16 +331,18 @@ export async function generateImage(
   const opts = { ...DEFAULT_IMAGE_OPTIONS, ...options };
   const log = createLogger(opts.verbose);
 
+  const { model, input, warnings } = resolveModelInput(opts.model!, {
+    prompt,
+    aspectRatio: opts.aspectRatio,
+    resolution: opts.resolution,
+    outputFormat: opts.outputFormat,
+  });
+  for (const warning of warnings) log.warn(warning);
+
   const payload: KieAiCreateTaskRequestBody = {
-    model: opts.model!,
+    model: model.apiModel,
     callBackUrl: '',
-    input: {
-      prompt,
-      image_input: [], // Add any image inputs if needed
-      aspect_ratio: opts.aspectRatio,
-      resolution: opts.resolution,
-      output_format: opts.outputFormat,
-    },
+    input,
   };
 
   const taskResponse = await createTask(payload, apiKey, 3, log);

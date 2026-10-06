@@ -151,6 +151,11 @@ describe('parseArgs', () => {
     expect(result.model).toBe('test-model');
   });
 
+  test('parses --list-models flag', () => {
+    const result = parseArgs(['node', 'script', '--list-models']);
+    expect(result.listModels).toBe(true);
+  });
+
   test('parses --concurrency option', () => {
     const result = parseArgs(['node', 'script', 'prompt', '--concurrency', '5']);
     expect(result.concurrency).toBe(5);
@@ -191,6 +196,7 @@ describe('parseArgs', () => {
     expect(result.cells).toEqual([]);
     expect(result.help).toBe(false);
     expect(result.version).toBe(false);
+    expect(result.listModels).toBe(false);
   });
 
   test('parses complex command with multiple options', () => {

@@ -4,6 +4,8 @@ import {
   generateImages,
   splitSpriteSheet,
   DEFAULT_OPTIONS,
+  MODELS,
+  getModel,
   KieApiError,
   TaskFailedError,
   TaskTimeoutError,
@@ -23,6 +25,11 @@ describe('exports', () => {
     expect(typeof TaskTimeoutError).toBe('function');
     expect(typeof TaskFailedError).toBe('function');
     expect(typeof Logger).toBe('function');
+  });
+
+  test('exports models', () => {
+    expect(MODELS.length).toBeGreaterThan(0);
+    expect(getModel(DEFAULT_OPTIONS.model)).toBeDefined();
   });
 
   test('exports DEFAULT_OPTIONS', () => {
