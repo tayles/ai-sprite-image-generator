@@ -72,7 +72,7 @@ If you ask for a resolution a model doesn't support, the highest supported resol
 
 ## Pricing Comparison
 
-Instead of paying for each image, we pay for one high-resolution sprite sheet on [kie.ai](https://kie.ai/pricing) and split it into 25 images (5x5 grid). A 4K sheet gives you 25 images of roughly 800x800px each.
+Instead of paying for each image, we pay for one high-resolution sprite sheet on [kie.ai](https://kie.ai/pricing) and split it into 25 images (5x5 grid). A square 4K sheet gives you 25 images of roughly 576x576px each with GPT Image 2.5 (2880x2880px sheet), or 820x820px with Nano Banana Pro (4096x4096px sheet).
 
 At time of writing (October 2026):
 
