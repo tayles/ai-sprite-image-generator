@@ -3,6 +3,7 @@
     "target": "ES2023",
     "module": "Preserve",
     "moduleDetection": "force",
+    "types": ["bun"],
 
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -23,6 +24,6 @@
     "noPropertyAccessFromIndexSignature": false
   },
 
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules", "dist", "bunup.config.ts"]
 }
