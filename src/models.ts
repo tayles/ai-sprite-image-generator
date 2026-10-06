@@ -348,7 +348,7 @@ export const MODELS: readonly ModelDefinition[] = [
   },
 ];
 
-export const DEFAULT_MODEL = 'nano-banana-pro';
+export const DEFAULT_MODEL = 'gpt-image-2.5-sunburst';
 
 /**
  * Looks up a model by its short id or kie.ai API model name.

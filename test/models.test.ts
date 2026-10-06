@@ -19,6 +19,11 @@ describe('MODELS', () => {
     expect(getModel(DEFAULT_MODEL)).toBeDefined();
   });
 
+  test('default model supports the default options without adjustments', () => {
+    const { warnings } = resolveModelInput(DEFAULT_MODEL, baseOpts);
+    expect(warnings).toEqual([]);
+  });
+
   test('every model has pricing for each supported resolution', () => {
     for (const model of MODELS) {
       if (model.resolutions.length === 0) {
