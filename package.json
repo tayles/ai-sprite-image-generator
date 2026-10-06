@@ -1,6 +1,6 @@
 {
   "name": "ai-sprite-image-generator",
-  "version": "1.0.7",
+  "version": "2.0.0",
   "description": "A TypeScript library and CLI tool to generate high-quality sprite images using GPT Image, Grok Imagine, Nano Banana and more via kie.ai",
   "keywords": [
     "ai",
