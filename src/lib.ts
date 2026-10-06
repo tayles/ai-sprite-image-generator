@@ -11,6 +11,7 @@ import {
   type OutputFormat,
 } from './kie-ai-client';
 import { createLogger, type Logger } from './logger';
+import { getPrice, resolveModelInput, type ModelDefinition } from './models';
 import { RateLimiter, executeWithRateLimit } from './rate-limiter';
 import {
   type CellDefinition,
@@ -44,7 +45,19 @@ export async function generateImages(
 
   log.log('Starting image generation...');
   log.log(`Prompt: "${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}"`);
+
+  // Validate the model and options before doing any work
+  const { model, resolution, warnings } = resolveModelInput(opts.model, {
+    prompt,
+    aspectRatio: opts.aspectRatio,
+    resolution: opts.resolution,
+    outputFormat: opts.outputFormat,
+  });
+  for (const warning of warnings) log.warn(warning);
+
   log.log('Options:', {
+    model: model.id,
+    resolution: resolution ?? 'fixed',
     rows: opts.rows,
     columns: opts.columns,
     outputPath: opts.outputPath,
@@ -83,6 +96,14 @@ export async function generateImages(
 
   log.log(`Created ${batches.length} batch(es)`);
 
+  const price = getPrice(model, resolution);
+  if (price !== undefined) {
+    const perImage = price / totalCells;
+    log.log(
+      `Estimated cost: $${(price * batches.length).toFixed(2)} (${batches.length} x $${price} per sprite sheet, ~$${perImage.toFixed(4)} per image)`,
+    );
+  }
+
   // Create rate limiter (20 requests per 10 seconds)
   const rateLimiter = new RateLimiter(20, 10_000, log);
 
@@ -95,6 +116,7 @@ export async function generateImages(
         batchCells,
         apiKey,
         prompt,
+        model,
         opts,
         rateLimiter,
         log,
@@ -247,6 +269,23 @@ export async function downloadImage(
 }
 
 /**
+ * Re-encodes an image file in place if it is not already in the requested format.
+ */
+export async function ensureImageFormat(
+  imagePath: string,
+  outputFormat: OutputFormat,
+  log: Logger = createLogger(),
+): Promise<void> {
+  const sharpFormat = outputFormat === 'jpg' ? 'jpeg' : outputFormat;
+  const { format } = await sharp(imagePath).metadata();
+  if (format === sharpFormat) return;
+
+  log.log(`Converting ${imagePath} from ${format} to ${outputFormat}...`);
+  const buffer = await sharp(imagePath).toFormat(sharpFormat).toBuffer();
+  await writeFile(imagePath, buffer);
+}
+
+/**
  * Splits a sprite sheet image into individual cell images using sharp.
  */
 export async function splitSpriteSheet(
@@ -321,6 +360,7 @@ async function processBatch(
   batchCells: CellDefinition[],
   apiKey: string,
   userPrompt: string,
+  model: ModelDefinition,
   opts: ImageGenerationOptions,
   rateLimiter: RateLimiter,
   log: Logger,
@@ -382,16 +422,16 @@ async function processBatch(
   await rateLimiter.acquire();
 
   // Create the generation task
+  const { input } = model.buildInput({
+    prompt: batchPrompt,
+    aspectRatio: opts.aspectRatio,
+    resolution: opts.resolution,
+    outputFormat: opts.outputFormat,
+  });
   const payload: KieAiCreateTaskRequestBody = {
-    model: opts.model,
+    model: model.apiModel,
     callBackUrl: '',
-    input: {
-      prompt: batchPrompt,
-      image_input: [],
-      aspect_ratio: opts.aspectRatio,
-      resolution: opts.resolution,
-      output_format: opts.outputFormat,
-    },
+    input,
   };
 
   const taskResponse = await createTask(payload, apiKey, opts.maxRetries, log);
@@ -417,6 +457,9 @@ async function processBatch(
 
   // Download the sprite sheet
   await downloadImage(imageUrl, batchImgPath, opts.maxRetries, log);
+
+  // Some models don't let us choose the output format, so convert if needed
+  await ensureImageFormat(batchImgPath, opts.outputFormat, log);
 
   // Load the image for splitting
   const { data: spriteBuffer } = await sharp(batchImgPath).toBuffer({ resolveWithObject: true });

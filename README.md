@@ -2,7 +2,7 @@
 
 ![AI Sprite Image Generator](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/ai-sprite-image-generator.svg)
 
-A TypeScript library and CLI tool to generate high-quality sprite images using Nano Banana Pro via [kie.ai](https://kie.ai).
+A TypeScript library and CLI tool to generate high-quality sprite images using the leading AI image models (GPT Image 2.5, Grok Imagine, Nano Banana, Seedream, Qwen Image) via [kie.ai](https://kie.ai).
 
 ![AI Sprite Image Generator Workflow](https://raw.githubusercontent.com/tayles/ai-sprite-image-generator/main/docs/ai-sprite-image-generator-workflow.png)
 
@@ -45,6 +45,30 @@ See [integration-test.ts](test/integration-test.ts) for example prompts and usag
 - 🎨 **Optimized prompts** - Automatically enhances your prompts for consistent sprite sheet generation
 - 🖼️ **Output consistency** - Consistent art style between images
 - 💰 **Cost effective** - Generate 25 images for the price of a single image on other platforms
+- 🧠 **Multiple models** - Choose from the top-ranked image models, including GPT Image 2.5, Grok Imagine Image 2.0 and Nano Banana Pro
+
+## Supported Models
+
+Pick a model with `--model <id>` (CLI) or the `model` option (library). Run `ai-sprite-image-generator --list-models` to see each model's supported aspect ratios.
+
+| Model                                                         | ID                       | Rank¹ | Max resolution | Price per sheet² | Price per image (5x5) |
+| ------------------------------------------------------------- | ------------------------ | ----- | -------------- | ---------------- | --------------------- |
+| [GPT Image 2.5 Sunburst](https://kie.ai/gpt-image-2-5)        | `gpt-image-2.5-sunburst` | 1     | 4K             | $0.08            | $0.0032               |
+| [GPT Image 2.5 Flare](https://kie.ai/gpt-image-2-5)           | `gpt-image-2.5-flare`    | 2     | 4K             | $0.08            | $0.0032               |
+| [GPT Image 2](https://kie.ai/gpt-image-2)                     | `gpt-image-2`            | 3     | 4K³            | $0.08            | $0.0032               |
+| [Grok Imagine Image 2.0](https://kie.ai/grok-imagine-image-2) | `grok-imagine-image-2`   | 4     | Fixed          | $0.02            | $0.0008               |
+| [Nano Banana 2](https://kie.ai/nano-banana-2)                 | `nano-banana-2`          | 6     | 4K             | $0.09            | $0.0036               |
+| [Nano Banana Pro](https://kie.ai/nano-banana-pro) (default)   | `nano-banana-pro`        | 11    | 4K             | $0.12            | $0.0048               |
+| [Nano Banana 2 Lite](https://kie.ai/nano-banana-2-lite)       | `nano-banana-2-lite`     | 13    | 1K             | $0.02            | $0.0008               |
+| [Qwen Image 3.0 Pro](https://kie.ai/qwen-image-3)             | `qwen-image-3-pro`       | 14    | 2K             | $0.06            | $0.0024               |
+| [Seedream 5.0 Pro](https://kie.ai/seedream-5-0-pro)           | `seedream-5-pro`         | 15    | 2K             | $0.07            | $0.0028               |
+| [Qwen Image 3.0](https://kie.ai/qwen-image-3)                 | `qwen-image-3`           | 16    | 2K             | $0.024           | $0.00096              |
+
+1. Rank on the [Artificial Analysis text-to-image leaderboard](https://artificialanalysis.ai/image/leaderboard/text-to-image) (October 2026).
+2. [kie.ai pricing](https://kie.ai/pricing) at the model's max resolution, October 2026. Lower resolutions are cheaper.
+3. GPT Image 2 can't generate 1:1 images at 4K, so square sprite sheets are generated at 2K ($0.05).
+
+If you ask for a resolution a model doesn't support, the highest supported resolution is used instead and a warning is logged. Models that can't output your chosen `--format` are converted locally.
 
 ## Pricing Comparison
 
@@ -56,7 +80,7 @@ At time of writing:
 By generating a 5x5 sprite sheet using KIE AI we can generate 25 820x820px images for **$0.0048** each.
 
 > [!TIP]
-> That's **30x** cheaper!
+> That's **30x** cheaper! Using GPT Image 2.5 at 4K brings it down to **$0.0032** per image.
 
 ## Installation
 
@@ -125,10 +149,11 @@ OPTIONS:
   -o, --output <path>      Output directory (default: ./out)
   -x, --columns <n>        Grid columns (default: 5)
   -y, --rows <n>           Grid rows (default: 5)
-  -a, --aspect-ratio <r>   Aspect ratio: 1:1, 2:3, 3:2, 4:3, 16:9, etc. (default: 1:1)
-  -r, --resolution <r>     Resolution: 1K, 2K, 4K (default: 4K)
+  -a, --aspect-ratio <r>   Aspect ratio, e.g. 1:1, 3:2, 16:9 (default: 1:1, varies by model)
+  -r, --resolution <r>     Resolution: 1K, 2K, 4K (default: 4K, or the model's max)
   -f, --format <fmt>       Output format: png, jpg (default: png)
-  -m, --model <name>       AI model name (default: nano-banana-pro)
+  -m, --model <name>       AI model (default: nano-banana-pro), see Supported Models
+  --list-models            List supported models with pricing and options
   --concurrency <n>        Max concurrent batches (default: 10)
   --existing <mode>        Handle existing files: overwrite, skip (default: overwrite)
   -q, --quiet              Suppress verbose output
@@ -141,6 +166,9 @@ OPTIONS:
 ```shell
 # Generate with custom grid size (3x3 = 9 images per batch)
 ai-sprite-image-generator "Animal avatars" -x 3 -y 3
+
+# Use GPT Image 2.5
+ai-sprite-image-generator "Game icons" -m gpt-image-2.5-sunburst
 
 # Output to specific directory in JPG format
 ai-sprite-image-generator "Logo designs" -o ./logos --format jpg
@@ -227,7 +255,7 @@ interface ImageGenerationOptions {
   pollIntervalMs: number; // Polling interval (default: 5000)
   maxPollAttempts: number; // Max poll attempts (default: 60)
   maxRetries: number; // Max retries for failures (default: 3)
-  model: string; // AI model to use (default: 'nano-banana-pro')
+  model: string; // AI model id, see Supported Models (default: 'nano-banana-pro')
   verbose: boolean; // Enable console logging (default: true)
 }
 

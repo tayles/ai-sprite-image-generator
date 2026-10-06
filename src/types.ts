@@ -1,4 +1,5 @@
 import type { AspectRatio, Resolution, OutputFormat } from './kie-ai-client';
+import { DEFAULT_MODEL } from './models';
 
 export interface ImageGenerationOptions {
   rows: number;
@@ -18,7 +19,7 @@ export interface ImageGenerationOptions {
   maxPollAttempts: number;
   /** Maximum retries for failed requests */
   maxRetries: number;
-  /** Model to use for image generation */
+  /** Model to use for image generation, see `MODELS` for supported ids */
   model: string;
   /** Enable verbose console logging (default: true) */
   verbose: boolean;
@@ -38,7 +39,7 @@ export const DEFAULT_OPTIONS: ImageGenerationOptions = {
   pollIntervalMs: 5_000,
   maxPollAttempts: 60,
   maxRetries: 3,
-  model: 'nano-banana-pro',
+  model: DEFAULT_MODEL,
   verbose: true,
 };
 

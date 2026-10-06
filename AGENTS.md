@@ -1,6 +1,8 @@
 # AGENTS.md
 
-`ai-sprite-image-generator` is a CLI tool and TypeScript library for generating sprite images using AI. It uses the https://kie.ai API to generate images using the nano banana pro image model.
+`ai-sprite-image-generator` is a CLI tool and TypeScript library for generating sprite images using AI. It uses the https://kie.ai API to generate images using a range of image models (Nano Banana Pro by default, plus GPT Image, Grok Imagine, Seedream, Qwen etc.).
+
+Supported models, their kie.ai input schemas and pricing live in `src/models.ts`. Model API docs: https://docs.kie.ai/llms.txt, pricing: https://kie.ai/pricing.
 
 ## Commands
 

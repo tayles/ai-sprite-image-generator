@@ -10,12 +10,14 @@ import {
   type Resolution,
 } from './kie-ai-client';
 import { generateImages } from './lib';
+import { DEFAULT_MODEL, MODELS } from './models';
 import type { ImageGenerationOptions } from './types';
 import { DEFAULT_OPTIONS } from './types';
 
 export interface CLIArgs {
   help: boolean;
   version: boolean;
+  listModels: boolean;
   prompt?: string;
   cells: string[];
   output: string;
@@ -33,7 +35,7 @@ export interface CLIArgs {
 export function showHelp(): void {
   console.log(
     `
-ai-sprite-image-generator - Generate sprite images using Nano Banana Pro via kie.ai
+ai-sprite-image-generator - Generate sprite images using AI image models via kie.ai
 
 USAGE:
   ai-sprite-image-generator <prompt> [options]
@@ -48,10 +50,12 @@ OPTIONS:
   -o, --output <path>      Output directory (default: ./out)
   -x, --columns <n>        Grid columns (default: 5)
   -y, --rows <n>           Grid rows (default: 5)
-  -a, --aspect-ratio <r>   Aspect ratio: ${ASPECT_RATIOS.join(', ')} (default: 1:1)
-  -r, --resolution <r>     Resolution: ${RESOLUTIONS.join(', ')} (default: 4K)
+  -a, --aspect-ratio <r>   Aspect ratio, e.g. 1:1, 3:2, 16:9 (default: 1:1, varies by model)
+  -r, --resolution <r>     Resolution: ${RESOLUTIONS.join(', ')} (default: 4K, or the model's max)
   -f, --format <fmt>       Output format: ${OUTPUT_FORMATS.join(', ')} (default: png)
-  -m, --model <name>       AI model name (default: nano-banana-pro)
+  -m, --model <name>       AI model (default: ${DEFAULT_MODEL}), one of:
+                           ${MODELS.map(m => m.id).join(', ')}
+  --list-models            List supported models with pricing and options
   --concurrency <n>        Max concurrent batches (default: 10)
   --existing <mode>        How to handle existing files: overwrite, skip (default: overwrite)
   -q, --quiet              Suppress verbose output
@@ -73,8 +77,39 @@ EXAMPLES:
 
   # Generate with custom grid size
   ai-sprite-image-generator "Animal avatars" -x 3 -y 3
+
+  # Use a different model
+  ai-sprite-image-generator "Game icons" -m gpt-image-2.5-sunburst
 `.trim(),
   );
+}
+
+/**
+ * Prints the supported models with kie.ai pricing and supported options.
+ */
+export function showModels(): void {
+  const formatPrice = (price: number | undefined) =>
+    price === undefined ? '' : `$${Number(price.toFixed(3))}`;
+
+  const rows = MODELS.map(m => {
+    const pricing =
+      m.resolutions.length > 0
+        ? m.resolutions.map(r => `${r} ${formatPrice(m.pricing[r])}`).join(', ')
+        : formatPrice(m.pricing.default);
+    return [m.id, m.name, m.provider, pricing, m.aspectRatios.join(', ')];
+  });
+  const header = ['ID', 'NAME', 'PROVIDER', 'PRICE PER SHEET', 'ASPECT RATIOS'];
+  const widths = header.map((h, i) => Math.max(h.length, ...rows.map(r => r[i]!.length)));
+  const format = (cols: string[]) =>
+    cols.map((c, i) => (i === cols.length - 1 ? c : c.padEnd(widths[i]!))).join('  ');
+
+  console.log(pc.bold(format(header)));
+  for (const row of rows) {
+    const line = format(row);
+    console.log(row[0] === DEFAULT_MODEL ? `${line} ${pc.dim('(default)')}` : line);
+  }
+  console.log('');
+  console.log(pc.dim('Prices are per generated sprite sheet, from https://kie.ai/pricing'));
 }
 
 export function showVersion(): void {
@@ -90,6 +125,7 @@ export function parseArgs(argv: string[]): CLIArgs {
   const result: CLIArgs = {
     help: false,
     version: false,
+    listModels: false,
     prompt: undefined,
     cells: [],
     output: DEFAULT_OPTIONS.outputPath,
@@ -117,6 +153,9 @@ export function parseArgs(argv: string[]): CLIArgs {
       i++;
     } else if (arg === '-v' || arg === '--version') {
       result.version = true;
+      i++;
+    } else if (arg === '--list-models') {
+      result.listModels = true;
       i++;
     } else if (arg === '-c' || arg === '--cells') {
       const value = args[++i];
@@ -245,6 +284,11 @@ export async function runCLI(argv: string[]): Promise<void> {
 
   if (args.version) {
     showVersion();
+    return;
+  }
+
+  if (args.listModels) {
+    showModels();
     return;
   }
 

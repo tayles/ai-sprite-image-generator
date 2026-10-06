@@ -9,6 +9,9 @@ export type {
 
 export { DEFAULT_OPTIONS } from './types';
 
+export { MODELS, DEFAULT_MODEL, getModel, getPrice } from './models';
+export type { ModelDefinition } from './models';
+
 export { KieApiError, TaskTimeoutError, TaskFailedError } from './kie-ai-client';
 
 export { createLogger, Logger } from './logger';

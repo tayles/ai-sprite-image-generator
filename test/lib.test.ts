@@ -9,6 +9,7 @@ import {
   buildSpritePrompt,
   downloadImage,
   ensureDirectoryExists,
+  ensureImageFormat,
   generateImages,
   splitSpriteSheet,
 } from '../src/lib';
@@ -124,6 +125,29 @@ describe('splitSpriteSheet', () => {
 
     // Cleanup
     await fsPromises.rm(tempDir, { recursive: true, force: true });
+  });
+});
+
+describe('ensureImageFormat', () => {
+  test('converts an image to the requested format', async () => {
+    const tempFile = path.join('/tmp', `test-format-${Date.now()}.jpg`);
+    await fsPromises.writeFile(tempFile, await createTestSpriteBuffer(10, 10));
+
+    await ensureImageFormat(tempFile, 'jpg', log);
+
+    expect((await sharp(tempFile).metadata()).format).toBe('jpeg');
+    await fsPromises.rm(tempFile, { force: true });
+  });
+
+  test('leaves an image already in the requested format untouched', async () => {
+    const tempFile = path.join('/tmp', `test-format-${Date.now()}.png`);
+    const buffer = await createTestSpriteBuffer(10, 10);
+    await fsPromises.writeFile(tempFile, buffer);
+
+    await ensureImageFormat(tempFile, 'png', log);
+
+    expect(Buffer.compare(await fsPromises.readFile(tempFile), buffer)).toBe(0);
+    await fsPromises.rm(tempFile, { force: true });
   });
 });
 
@@ -425,6 +449,108 @@ describe('generateImages (integration)', () => {
 
     // Cleanup
     await fsPromises.rm(tempDir, { recursive: true, force: true });
+  });
+});
+
+describe('generateImages (models)', () => {
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+  });
+
+  afterEach(() => {
+    restoreFetch();
+  });
+
+  test('sends the model-specific payload and converts the output format', async () => {
+    // Model returns a PNG but we ask for JPG
+    const spriteBuffer = await createTestSpriteBuffer(200, 200);
+    const tempDir = path.join('/tmp', `test-models-${Date.now()}`);
+    let requestBody: { model: string; input: Record<string, unknown> } | undefined;
+
+    setMockFetch(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = getUrlFromInput(input);
+
+      if (url.includes('/v1/jobs/createTask')) {
+        requestBody = JSON.parse(init?.body as string);
+        return new Response(
+          JSON.stringify({ code: 0, msg: 'success', data: { taskId: 'model-task' } }),
+          { status: 200 },
+        );
+      }
+
+      if (url.includes('/jobs/recordInfo')) {
+        return new Response(
+          JSON.stringify({
+            code: 0,
+            data: {
+              taskId: 'model-task',
+              state: 'success',
+              resultJson: JSON.stringify({ resultUrls: ['https://example.com/sprite.png'] }),
+            },
+          }),
+          { status: 200 },
+        );
+      }
+
+      if (url.includes('example.com/sprite.png')) {
+        return new Response(new Uint8Array(spriteBuffer), { status: 200 });
+      }
+
+      return new Response('Not found', { status: 404 });
+    });
+
+    const result = await generateImages(
+      'test-token',
+      'Test',
+      {
+        outputPath: tempDir,
+        rows: 1,
+        columns: 2,
+        model: 'gpt-image-2.5-sunburst',
+        aspectRatio: '3:2',
+        outputFormat: 'jpg',
+        maxRetries: 0,
+        pollIntervalMs: 10,
+        maxPollAttempts: 2,
+        verbose: false,
+      },
+      ['A', 'B'],
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(requestBody?.model).toBe('gpt-image-2-5-sunburst-text-to-image');
+    expect(requestBody?.input).toMatchObject({ aspect_ratio: '3:2', resolution: '4K' });
+    expect(requestBody?.input.output_format).toBeUndefined();
+
+    const batchPath = path.join(tempDir, 'batches', 'batch-1.jpg');
+    expect((await sharp(batchPath).metadata()).format).toBe('jpeg');
+
+    await fsPromises.rm(tempDir, { recursive: true, force: true });
+  });
+
+  test('rejects unknown models before making any requests', async () => {
+    let called = false;
+    setMockFetch(() => {
+      called = true;
+      return Promise.resolve(new Response('', { status: 500 }));
+    });
+
+    // oxlint-disable-next-line typescript-eslint/await-thenable
+    await expect(
+      generateImages('test-token', 'Test', { model: 'not-a-model', verbose: false }),
+    ).rejects.toThrow('Unknown model');
+    expect(called).toBe(false);
+  });
+
+  test('rejects unsupported aspect ratios for a model', async () => {
+    // oxlint-disable-next-line typescript-eslint/await-thenable
+    await expect(
+      generateImages('test-token', 'Test', {
+        model: 'grok-imagine-image-2',
+        aspectRatio: '21:9',
+        verbose: false,
+      }),
+    ).rejects.toThrow('does not support aspect ratio');
   });
 });
 
